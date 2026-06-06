@@ -31,8 +31,10 @@ Repository = "https://github.com/joteqthefirst/confamnode-sdk"
 
 [dependency-groups]
 dev = [
+    "build>=1.5.0",
     "pytest>=9.0.3",
     "pytest-dotenv>=0.5.2",
+    "twine>=6.2.0",
 ]
 
 [tool.pytest.ini_options]
