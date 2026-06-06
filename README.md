@@ -1,6 +1,6 @@
 # ConfamNode
 
-The Nigerian AI inference SDK — access powerful AI models and pay in Naira.
+The Nigerian AI inference SDK — access powerful AI models.
 
 Built by **JoTeq the First**
 
