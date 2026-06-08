@@ -20,3 +20,8 @@ def test_version_is_defined():
     import confamnode
     assert hasattr(confamnode, "__version__")
     assert isinstance(confamnode.__version__, str)
+
+
+def test_confamstream_importable_from_package():
+    from confamnode import ConfamStream
+    assert ConfamStream is not None

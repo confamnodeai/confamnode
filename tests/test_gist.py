@@ -1,8 +1,11 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from confamnode.client import ConfamNode
+
 from confamnode import models
+from confamnode.client import ConfamNode
+from confamnode.ansa import Ansa, Usage, Cost
 from confamnode.exceptions import ConfamModelError
+
 
 
 @pytest.fixture
@@ -41,11 +44,11 @@ def test_gist_rejects_invalid_model(client):
 
 def test_gist_returns_content(client, mock_litellm_response):
     with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
-        response = client.gist(
+        ansa = client.gist(
             model=models.SPEED,
             messages=[{"role": "user", "content": "How far?"}]
         )
-        assert response.choices[0].message.content == "How far! I dey fine."
+        assert ansa.text == "How far! I dey fine."
 
 
 def test_gist_accepts_all_valid_models(client, mock_litellm_response):
@@ -57,11 +60,11 @@ def test_gist_accepts_all_valid_models(client, mock_litellm_response):
     ]
     with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
         for model in valid_models:
-            response = client.gist(
+            ansa = client.gist(
                 model=model,
                 messages=[{"role": "user", "content": "How far?"}]
             )
-            assert response is not None
+            assert ansa is not None
 
 
 def test_gist_sends_correct_model_to_litellm(client, mock_litellm_response):
@@ -77,11 +80,11 @@ def test_gist_sends_correct_model_to_litellm(client, mock_litellm_response):
 
 def test_gist_accepts_string_messages(client, mock_litellm_response):
     with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
-        response = client.gist(
+        ansa = client.gist(
             model=models.SPEED,
             messages="How far?"
         )
-        assert response is not None
+        assert ansa is not None
 
 
 def test_gist_converts_string_to_message_list(client, mock_litellm_response):
@@ -96,11 +99,11 @@ def test_gist_converts_string_to_message_list(client, mock_litellm_response):
 
 def test_gist_accepts_lists_messages(client, mock_litellm_response):
     with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
-        response = client.gist(
+        ansa = client.gist(
             model=models.SPEED,
             messages=[{"role": "user", "content": "How far?"}]
         )
-        assert response is not None
+        assert ansa is not None
 
 
 def test_gist_rejects_invalid_messages_type(client):
@@ -122,3 +125,91 @@ def test_gist_passes_kwargs_to_litellm(client, mock_litellm_response):
         call_args = mock_call.call_args
         assert call_args.kwargs["temperature"] == 0.7
         assert call_args.kwargs["max_tokens"] == 500
+
+
+def test_gist_prepends_openai_prefix_to_model(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        call_args = mock_call.call_args
+        assert call_args.kwargs["model"] == "openai/confam-speed"
+
+
+def test_gist_returns_ansa_object(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert isinstance(ansa, Ansa)
+
+
+def test_gist_has_test(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert ansa.text == "How far! I dey fine."
+
+    
+def test_gist_has_model(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert ansa.model == "confam-speed"
+
+
+def test_gist_has_usage(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert isinstance(ansa.usage, Usage)
+        assert ansa.usage.prompt_tokens == 10
+        assert ansa.usage.completion_tokens == 20
+        assert ansa.usage.total_tokens == 30
+
+
+def test_gist_has_cost(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert isinstance(ansa.cost, Cost)
+        assert isinstance(ansa.cost.naira, float)
+
+
+def test_gist_has_finish_reason(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert ansa.finish_reason is not None
+
+
+def test_gist_has_id(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert ansa.id.startswith("confam-")
+
+
+def test_gist_has_raw(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model="confam-speed",
+            messages="How far?"
+        )
+        assert ansa.raw is not None
+
+
