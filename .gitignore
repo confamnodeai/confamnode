@@ -18,3 +18,7 @@ __pycache__/
 dist/
 *.egg-info/
 .pytest_cache/
+
+# Test files
+test_chat.py
+test_stream.py

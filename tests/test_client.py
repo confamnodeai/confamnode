@@ -1,6 +1,7 @@
 import os
 import pytest
 from unittest.mock import patch
+
 from confamnode.client import ConfamNode
 from confamnode.exceptions import ConfamAuthError
 

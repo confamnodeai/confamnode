@@ -1,6 +1,6 @@
 # ConfamNode
 
-The Nigerian AI inference SDK — access powerful AI models.
+The Nigerian AI inference gateway — access powerful AI models.
 
 Built by **JoTeq the First**
 
@@ -8,8 +8,42 @@ Built by **JoTeq the First**
 
 ## Installation
 
+### Using pip
 ```bash
 pip install confamnode
+```
+
+### Using uv
+```bash
+uv add confamnode
+```
+
+### Using virtualenv
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate — Linux/Mac
+source .venv/bin/activate
+
+# Activate — Windows
+.venv\Scripts\activate
+
+# Install
+pip install confamnode
+```
+
+### Using uv with virtual environment
+```bash
+# Create project with uv
+uv init my-project
+cd my-project
+
+# Add confamnode
+uv add confamnode
+
+# Run your script
+uv run python main.py
 ```
 
 ---
@@ -21,12 +55,12 @@ from confamnode import ConfamNode
 
 client = ConfamNode(api_key="confam-sk-xxx")
 
-response = client.gist(
+ansa = client.gist(
     model="confam-speed",
     messages="How far?"
 )
 
-print(response.choices[0].message.content)
+print(ansa.choices[0].message.content)
 ```
 
 ---
@@ -34,12 +68,12 @@ print(response.choices[0].message.content)
 ## Streaming
 
 ```python
-for chunk in client.gist(
+for yarn in client.gist(
     model="confam-speed",
     messages="How far?",
     stream=True
 ):
-    print(chunk.choices[0].delta.content, end="")
+    print(yarn.choices[0].delta.content, end="")
 ```
 
 ---
@@ -74,23 +108,23 @@ client = ConfamNode()
 from confamnode import ConfamAuthError, ConfamRateLimitError, ConfamModelError
 
 try:
-    response = client.gist(
+    ansa = client.gist(
         model="confam-speed",
         messages="How far?"
     )
 except ConfamAuthError:
-    print("Check your API key")
+    print("You sure say na the correct API Key be that")
 except ConfamRateLimitError:
-    print("You don reach your limit. To upgrade your plan, contact us at confamnode@gmail.com")
+    print("You don reach your limit. Contact us at confamnode@gmail.com make we upgrade your plan")
 except ConfamModelError:
-    print("Invalid model name")
+    print("This model name no dey valid")
 ```
 
 ---
 
 ## Private Deployment
 
-Need NDPA-compliant private AI on your own infrastructure? JoTeq the First offers on-premise deployment on Jetson devices and GPUs, RAG pipelines, fine-tuning, and dedicated hosted models.
+Need NDPA-compliant private AI on your own infrastructure? JoTeq the First offers on-premise deployment on Jetson devices and GPUs, RAG pipelines, fine-tuning, eevaluation, monitoring, and dedicated hosted models.
 
 Contact us at **joteqthefirst@gmail.com**
 
