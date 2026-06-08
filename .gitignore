@@ -22,3 +22,7 @@ dist/
 # Test files
 test_chat.py
 test_stream.py
+exchange_rate_calc.py
+
+# Other files
+main.py
