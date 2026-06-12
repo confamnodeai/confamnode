@@ -94,7 +94,9 @@ def test_gist_converts_string_to_message_list(client, mock_litellm_response):
             messages="How far?"
         )
         call_args = mock_call.call_args
-        assert call_args.kwargs["messages"] == [{"role": "user", "content": "How far?"}]
+        messages = call_args.kwargs["messages"]
+        assert messages[1]["role"] == "user"
+        assert messages[1]["content"] == "How far?"
 
 
 def test_gist_accepts_lists_messages(client, mock_litellm_response):
@@ -213,3 +215,98 @@ def test_gist_has_raw(client, mock_litellm_response):
         assert ansa.raw is not None
 
 
+def test_gist_adds_default_system_message(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model=models.SPEED,
+            messages="Who are you?"
+        )
+        call_args = mock_call.call_args
+        messages = call_args.kwargs["messages"]
+        assert messages[0]["role"] == "system"
+        assert "ConfamNode" in messages[0]["content"]
+
+
+def test_gist_custom_system_parameter_overrides_default(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model=models.SPEED,
+            messages="Who are you?",
+            system="You are a Konga assistant"
+        )
+        call_args = mock_call.call_args
+        messages = call_args.kwargs["messages"]
+        assert messages[0]["role"] == "system"
+        assert messages[0]["content"] == "You are a Konga assistant"
+
+
+def test_gist_system_none_disbales_system_message(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model=models.SPEED,
+            messages="Who are you?",
+            system=None
+        )
+        call_args = mock_call.call_args
+        messages = call_args.kwargs["messages"]
+        assert messages[0]["role"] == "user"
+
+
+def test_gist_system_in_messages_list_is_respected(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model=models.SPEED,
+            messages=[
+                {"role": "system", "content": "You are a Konga assistant"},
+                {"role": "user", "content": "Who are you?"}
+            ]
+        )
+        call_args = mock_call.call_args
+        messages = call_args.kwargs["messages"]
+        assert messages[0]["role"] == "system"
+        assert messages[0]["content"] == "You are a Konga assistant"
+
+
+def test_gist_default_system_message_contains_nigeria(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model=models.SPEED,
+            messages="Where are you from?"
+        )
+        call_args = mock_call.call_args
+        messages = call_args.kwargs["messages"]
+        assert "Nigeria" in messages[0]["content"]
+
+
+def test_gist_default_system_message_does_not_reveal_underlying_model(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response) as mock_call:
+        client.gist(
+            model=models.SPEED,
+            messages="What model are you?"
+        )
+        call_args = mock_call.call_args
+        messages = call_args.kwargs["messages"]
+        system_content = messages[0]["content"]
+        assert "Gemini" not in system_content
+        assert "GPT" not in system_content
+        assert "Llama" not in system_content
+
+
+def test_gist_sets_is_local_false_for_cloud_model(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model=models.SPEED,
+            messages="How you dey?"
+        )
+        assert ansa.is_local == False
+        assert ansa.is_ngn_data_residency == False
+
+
+def test_gist_sets_is_local_true_for_nano(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model=models.NANO,
+            messages="How you dey?"
+        )
+        assert ansa.is_local == True
+        assert ansa.is_ngn_data_residency == True
