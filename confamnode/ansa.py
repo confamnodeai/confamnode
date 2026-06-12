@@ -29,3 +29,5 @@ class Ansa:
     tools: list = field(default_factory=list)
     citations: list = field(default_factory=list)
     id: str = field(default_factory=lambda: f"confam-{uuid.uuid4()}")
+    is_local: bool = False
+    is_ngn_data_residency: bool = False

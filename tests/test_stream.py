@@ -142,3 +142,29 @@ def test_gist_stream_passes_stream_true_to_litellm(client, mock_stream_response)
         )
         call_args = mock_call.call_args
         assert call_args.kwargs.get("stream") == True
+
+
+def test_gist_stream_ansa_is_local_false_for_cloud_model(client, mock_stream_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_stream_response):
+        stream = client.gist(
+            model=models.SPEED,
+            messages="How you dey?",
+            stream=True
+        )
+        list(stream)
+        ansa = stream.get_ansa()
+        assert ansa.is_local == False
+        assert ansa.is_ngn_data_residency == False
+
+
+def test_gist_stream_ansa_is_local_true_for_nano(client, mock_stream_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_stream_response):
+        stream = client.gist(
+            model=models.NANO,
+            messages="How you dey?",
+            stream=True
+        )
+        list(stream)
+        ansa = stream.get_ansa()
+        assert ansa.is_local == True
+        assert ansa.is_ngn_data_residency == True

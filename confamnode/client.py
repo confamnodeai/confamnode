@@ -5,39 +5,9 @@ from typing import Union, List, Dict
 
 from confamnode import models
 from confamnode.ansa import Ansa, Usage, Cost
+from confamnode.prompts import CONFAMNODE_SYSTEM_MESSAGE
 from confamnode.exceptions import ConfamAuthError, ConfamModelError
-
-VALID_MODELS = [
-    models.LITE,
-    models.SPEED,
-    models.REASONING,
-
-    models.INTELLIGENCE,
-    models.DEEP_REASONING,
-    models.CODE,
-    models.CODE_PRO,
-    models.VISION,
-    models.AUDIO,
-    models.TTS,
-    
-    models.NANO,
-
-    models.EMBED_TEXT,
-    models.EMBED_MULTIMODAL,
-    models.EMBED_MULTIMODAL_2,
-
-    # Paid embeddings
-    models.EMBED_TEXT_PRO,
-    models.EMBED_MULTIMODAL_PRO,
-    models.EMBED_MULTILINGUAL,
-    models.EMBED_SMALL,
-    models.EMBED_0_6B,
-    models.EMBED_TEXT_LOCAL,
-
-    # Rerank
-    models.RERANK,
-    models.RERANK_FAST,
-]
+from confamnode.registry import VALID_MODELS, LOCAL_MODELS, NGN_DATA_RESIDENCY_MODELS
 
 DEFAULT_BASE_URL = "https://api.confamnode.com/v1"
 DEFAULT_USD_TO_NAIRA = 1400.0
@@ -65,15 +35,40 @@ class ConfamNode:
         self,
         model: str,
         messages: Union[str, List[Dict[str, str]]],
+        system: str | None = "default",
         **kwargs
-    ) -> object:
+    ) -> Ansa:
         if model not in VALID_MODELS:
             raise ConfamModelError(model)
         
+        # Handle string messages
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
         elif not isinstance(messages, list):
             raise ValueError("messages must be a string or list")
+        
+        # Check if system message is already in list
+        has_system_in_messages = any(m.get("role") == "system" for m in messages)
+
+        # Inject system message
+        if not has_system_in_messages:
+            if system == "default":
+                # Use ConfamNode default identity
+                messages = [{"role": "system", "content": CONFAMNODE_SYSTEM_MESSAGE}] + messages
+            elif system is not None:
+                # Use custom system message
+                messages = [{"role": "system", "content": system}] + messages
+            # system=None -> no system message added
+
+        if kwargs.get("stream", False):
+            raw = litellm.completion(
+                model=f"openai/{model}",
+                messages=messages,
+                api_key=self.litellm_key,
+                base_url=self.base_url,
+                **kwargs
+            )
+            return ConfamStream(raw, model)
         
         raw = litellm.completion(
             model=f"openai/{model}",
@@ -82,9 +77,6 @@ class ConfamNode:
             base_url=self.base_url,
             **kwargs
         )
-
-        if kwargs.get("stream", False):
-            return ConfamStream(raw, model)
 
         hidden = getattr(raw, "_hidden_params", {})
         naira_cost = float(hidden.get("x_confam_naira_cost", 0.0))
@@ -134,6 +126,8 @@ class ConfamNode:
             cost=cost,
             finish_reason=raw.choices[0].finish_reason,
             raw=raw,
+            is_local=model in LOCAL_MODELS,
+            is_ngn_data_residency=model in LOCAL_MODELS
         )
     
 
@@ -184,4 +178,6 @@ class ConfamStream:
             cost=cost,
             finish_reason=finish_reason,
             raw=self._chunks,
+            is_local=self._model in LOCAL_MODELS,
+            is_ngn_data_residency=self._model in LOCAL_MODELS,
         )

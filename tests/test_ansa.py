@@ -229,3 +229,48 @@ def test_ansa_accepts_citations():
     )
     assert len(ansa.citations) == 2
     assert ansa.citations[0]["source"] == "World Bank"
+
+
+def test_ansa_is_local_defaults_to_false():
+    usage = Usage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+    cost = Cost(naira=1.23)
+    ansa = Ansa(
+        text="How far!",
+        model="confam-speed",
+        usage=usage,
+        cost=cost,
+        finish_reason="stop",
+        raw={}
+    )
+    assert ansa.is_local == False
+
+
+def test_ansa_is_ngn_data_residency_resident_defaults_to_false():
+    usage = Usage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+    cost = Cost(naira=1.23)
+    ansa = Ansa(
+        text="How far!",
+        model="confam-speed",
+        usage=usage,
+        cost=cost,
+        finish_reason="stop",
+        raw={}
+    )
+    assert ansa.is_ngn_data_residency == False
+
+
+def test_ansa_accepts_is_local_true():
+    usage = Usage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+    cost = Cost(naira=1.23)
+    ansa = Ansa(
+        text="How far!",
+        model="confam-speed",
+        usage=usage,
+        cost=cost,
+        finish_reason="stop",
+        raw={},
+        is_local=True,
+        is_ngn_data_residency=True
+    )
+    assert ansa.is_local == True
+    assert ansa.is_ngn_data_residency == True
