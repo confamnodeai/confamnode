@@ -61,7 +61,7 @@ pip install confamnode
 ```python
 from confamnode import ConfamNode
 
-client = ConfamNode(api_key="confam-sk-xxx")
+client = ConfamNode(api_key="confam-xxx")
 
 ansa = client.gist(
     model="confam-speed",
@@ -69,9 +69,9 @@ ansa = client.gist(
 )
 
 print(ansa.text)
-print(f"Cost:   ₦{ansa.cost.naira:.6f}")
+print(f"Cost: ₦{ansa.cost.naira:.6f}")
 print(f"Tokens: {ansa.usage.total_tokens}")
-print(f"ID:     {ansa.id}")
+print(f"ID: {ansa.id}")
 ```
 
 ---
@@ -81,7 +81,7 @@ print(f"ID:     {ansa.id}")
 ```python
 from confamnode import ConfamNode
 
-client = ConfamNode(api_key="confam-sk-xxx")
+client = ConfamNode(api_key="confam-xxx")
 
 stream = client.gist(
     model="confam-speed",
@@ -97,9 +97,9 @@ for yarn in stream:
 
 # Get full Ansa after stream completes
 ansa = stream.get_ansa()
-print(f"\nModel:  {ansa.model}")
+print(f"\nModel: {ansa.model}")
 print(f"Tokens: {ansa.usage.total_tokens}")
-print(f"Cost:   ₦{ansa.cost.naira:.6f}")
+print(f"Cost: ₦{ansa.cost.naira:.6f}")
 if ansa.cost.dollars:
     print(f"${ansa.cost.dollars:.8f}")
 print(f"ID: {ansa.id}")
@@ -164,7 +164,7 @@ ansa.raw                     # original LiteLLM response
 
 | Model | Description | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
 |---|---|---|---|---|---|
-| `confam-nano` | Qwen3.5 4B on Jetson Orin Nano | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
+| `confam-nano` | Local model — data stays in Nigeria | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
 
 Runs entirely on Nigerian hardware. Data never transmitted abroad.
 
@@ -300,7 +300,7 @@ print(ansa.text)
 ## Environment Variable
 
 ```bash
-export CONFAMNODE_API_KEY="confam-sk-xxx"
+export CONFAMNODE_API_KEY="confam-xxx"
 ```
 
 ```python
@@ -316,7 +316,7 @@ For enterprise clients running ConfamNode on private infrastructure:
 
 ```python
 client = ConfamNode(
-    api_key="confam-sk-xxx",
+    api_key="confam-xxx",
     base_url="http://your-private-server:4000/v1"
 )
 ```
@@ -367,6 +367,7 @@ Contact: [hello@confamnode.com](mailto:hello@confamnode.com)
 
 ## Links
 
+- Website: [ConfamNode](https://confamnode.com)
 - PyPI: [pypi.org/project/confamnode](https://pypi.org/project/confamnode)
 - GitHub: [github.com/confamnodeai/confamnode](https://github.com/confamnodeai/confamnode)
 - General: [hello@confamnode.com](mailto:hello@confamnode.com)

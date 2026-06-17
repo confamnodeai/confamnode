@@ -24,11 +24,11 @@ class ConfamNode:
         if not api_key:
             raise ValueError("api_key is required")
         
-        if not api_key.startswith("confam-sk-"):
+        if not api_key.startswith("confam-"):
             raise ConfamAuthError()
         
         self.api_key = api_key
-        self.litellm_key = api_key.removeprefix("confam-")
+        self.litellm_key = "sk-" + api_key.removeprefix("confam-")
         self.base_url = base_url or DEFAULT_BASE_URL
 
     def gist(
