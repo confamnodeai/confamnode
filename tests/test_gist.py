@@ -310,3 +310,15 @@ def test_gist_sets_is_local_true_for_nano(client, mock_litellm_response):
         )
         assert ansa.is_local == True
         assert ansa.is_ngn_data_residency == True
+
+
+def test_gist_has_raw(client, mock_litellm_response):
+    with patch("confamnode.client.litellm.completion", return_value=mock_litellm_response):
+        ansa = client.gist(
+            model=models.SPEED,
+            messages="How you dey?"
+        )
+        assert isinstance(ansa.raw, dict)
+        assert "id" in ansa.raw
+        assert "_hidden_params" not in ansa.raw
+        assert "openai" not in str(ansa.raw)

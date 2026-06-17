@@ -112,7 +112,7 @@ print(f"ID: {ansa.id}")
 Every `gist()` call returns an `Ansa` object:
 
 ```python
-ansa = client.gist(model="confam-speed", messages="How far?")
+ansa = client.gist(model="confam-speed", messages="How you dey?")
 
 # Response
 ansa.text               # response text
@@ -123,7 +123,7 @@ ansa.citations          # citations (search models only)
 ansa.finish_reason      # why generation stopped
 
 # Usage
-ansa.usage.prompt_tokens      # input tokens used
+ansa.usage.prompt_tokens      # input tokens used (includes system message)
 ansa.usage.completion_tokens  # output tokens used
 ansa.usage.total_tokens       # total tokens used
 
@@ -137,8 +137,15 @@ ansa.cost.dollars       # cost in USD (if available)
 ansa.is_local                # True — runs on Nigerian hardware
 ansa.is_ngn_data_residency   # True — data never leaves Nigeria
 ansa.id                      # unique request ID (confam-xxxx-xxxx)
-ansa.raw                     # original LiteLLM response
+
+# Response metadata
+ansa.raw                     # dict with id, finish_reason, usage
+ansa.raw["id"]               # provider response ID
+ansa.raw["finish_reason"]    # why generation stopped
+ansa.raw["usage"]            # prompt and completion token counts
 ```
+
+> **Note:** `prompt_tokens` includes any system message tokens. This is standard behaviour across all LLM providers (OpenAI, Anthropic, etc.).
 
 ---
 
@@ -160,15 +167,14 @@ ansa.raw                     # original LiteLLM response
 | `confam-deep-reasoning` | Complex thinking, multi-step analysis | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
 | `confam-code` | Coding assistance, 1M context | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
 
-### Local Models — Nigeria Data Residency
+### Local Models — Nigerian Data Residency
 
 | Model | Description | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
 |---|---|---|---|---|---|
 | `confam-nano` | Local model — data stays in Nigeria | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
 
 Runs entirely on Nigerian hardware. Data never transmitted abroad.
-
-Data never leaves Nigeria. Ideal for banks, fintechs, hospitals, law firms, and government agencies.
+Ideal for banks, fintechs, hospitals, law firms, and government agencies.
 
 More models coming soon. Contact [hello@confamnode.com](mailto:hello@confamnode.com) for early access.
 
@@ -235,9 +241,10 @@ Enable extended thinking for complex problems:
 ansa = client.gist(
     model="confam-reasoning",
     messages="One trader buy goods for ₦50,000 sell am for ₦75,000. After e pay ₦5,000 for transport and ₦3,000 for market, wetin be the real profit? Show how you calculate am.",
-    # Explicit reasoning control
     allowed_openai_params=["reasoning_effort"],
-    rreasoning_effort={"effort": "low", "summary": "detailed"} # effort can be "low", "mid", "high", or "xhigh". summary can be "detailed", or "concise"
+    reasoning_effort={"effort": "low", "summary": "detailed"}
+    # effort: "low", "mid", "high", or "xhigh"
+    # summary: "detailed" or "concise"
 )
 
 print(ansa.reasoning)   # thinking trace
@@ -250,9 +257,8 @@ Also available on `confam-deep-reasoning` for more complex multi-step problems:
 ansa = client.gist(
     model="confam-deep-reasoning",
     messages="Analyse the financial risk of a Nigerian fintech expanding to Ghana...",
-    # Explicit reasoning control
     allowed_openai_params=["reasoning_effort"],
-    rreasoning_effort={"effort": "low", "summary": "detailed"} # effort can be "low", "mid", "high", or "xhigh". summary can be "detailed", or "concise"
+    reasoning_effort={"effort": "high", "summary": "detailed"}
 )
 
 print(ansa.reasoning)   # full thinking trace
@@ -352,7 +358,7 @@ except ConfamNodeError as e:
 
 ## Private AI Deployment
 
-Need Data-residential private AI on your own infrastructure?
+Need data-residential private AI on your own infrastructure?
 
 JoTeq the First offers:
 - On-premise deployment on Jetson devices and GPUs
@@ -367,7 +373,7 @@ Contact: [hello@confamnode.com](mailto:hello@confamnode.com)
 
 ## Links
 
-- Website: [ConfamNode](https://confamnode.com)
+- Website: [confamnode.com](https://confamnode.com)
 - PyPI: [pypi.org/project/confamnode](https://pypi.org/project/confamnode)
 - GitHub: [github.com/confamnodeai/confamnode](https://github.com/confamnodeai/confamnode)
 - General: [hello@confamnode.com](mailto:hello@confamnode.com)

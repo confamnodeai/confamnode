@@ -3,11 +3,12 @@ import litellm
 
 from typing import Union, List, Dict
 
-from confamnode import models
 from confamnode.ansa import Ansa, Usage, Cost
 from confamnode.prompts import CONFAMNODE_SYSTEM_MESSAGE
+from confamnode.registry import VALID_MODELS, LOCAL_MODELS
+from confamnode.utils import sanitize_raw, sanitize_stream_raw
 from confamnode.exceptions import ConfamAuthError, ConfamModelError
-from confamnode.registry import VALID_MODELS, LOCAL_MODELS, NGN_DATA_RESIDENCY_MODELS
+
 
 DEFAULT_BASE_URL = "https://api.confamnode.com/v1"
 DEFAULT_USD_TO_NAIRA = 1400.0
@@ -125,7 +126,7 @@ class ConfamNode:
             usage=usage,
             cost=cost,
             finish_reason=raw.choices[0].finish_reason,
-            raw=raw,
+            raw=sanitize_raw(raw),
             is_local=model in LOCAL_MODELS,
             is_ngn_data_residency=model in LOCAL_MODELS
         )
@@ -177,7 +178,7 @@ class ConfamStream:
             usage=usage,
             cost=cost,
             finish_reason=finish_reason,
-            raw=self._chunks,
+            raw=sanitize_stream_raw(self._chunks, finish_reason, getattr(last_chunk, "usage", None)),
             is_local=self._model in LOCAL_MODELS,
             is_ngn_data_residency=self._model in LOCAL_MODELS,
         )

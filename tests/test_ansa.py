@@ -274,3 +274,62 @@ def test_ansa_accepts_is_local_true():
     )
     assert ansa.is_local == True
     assert ansa.is_ngn_data_residency == True
+
+
+def test_ansa_raw_is_dict():
+    usage = Usage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+    cost = Cost(naira=1.23)
+    ansa = Ansa(
+        text="How you dey?",
+        model="confam-speed",
+        usage=usage,
+        cost=cost,
+        finish_reason="stop",
+        raw={
+            "id": "confam-resp-abc123",
+            "finish_reason": "stop",
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 20,
+            }
+        }
+    )
+    assert isinstance(ansa.raw, dict)
+
+
+def test_ansa_raw_does_not_expose_model_routing():
+    usage = Usage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+    cost = Cost(naira=1.23)
+    raw = {
+        "id": "confam-resp-abc123",
+        "finish_reason": "stop",
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 20,
+        }
+    }
+    ansa = Ansa(
+        text="How you dey?",
+        model="confam-speed",
+        usage=usage,
+        cost=cost,
+        finish_reason="stop",
+        raw=raw
+    )
+    assert "model" not in ansa.raw
+    assert "openai" not in str(ansa.raw)
+    assert "_hidden_params" not in ansa.raw
+
+
+def test_ansa_raw_has_id():
+    usage = Usage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+    cost = Cost(naira=1.23)
+    ansa = Ansa(
+        text="How you dey?",
+        model="confam-speed",
+        usage=usage,
+        cost=cost,
+        finish_reason="stop",
+        raw = {"id": "confam-resp-abc123", "finish_reason": "stop", "usage": {}}
+    )
+    assert ansa.raw["id"] == "confam-resp-abc123"
