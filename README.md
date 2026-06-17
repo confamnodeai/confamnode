@@ -243,7 +243,7 @@ ansa = client.gist(
     messages="One trader buy goods for ₦50,000 sell am for ₦75,000. After e pay ₦5,000 for transport and ₦3,000 for market, wetin be the real profit? Show how you calculate am.",
     allowed_openai_params=["reasoning_effort"],
     reasoning_effort={"effort": "low", "summary": "detailed"}
-    # effort: "low", "mid", "high", or "xhigh"
+    # effort: "low", "medium", "high", or "xhigh"
     # summary: "detailed" or "concise"
 )
 
