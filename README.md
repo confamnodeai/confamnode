@@ -100,8 +100,6 @@ ansa = stream.get_ansa()
 print(f"\nModel: {ansa.model}")
 print(f"Tokens: {ansa.usage.total_tokens}")
 print(f"Cost: ₦{ansa.cost.naira:.6f}")
-if ansa.cost.dollars:
-    print(f"${ansa.cost.dollars:.8f}")
 print(f"ID: {ansa.id}")
 ```
 
@@ -131,7 +129,6 @@ ansa.usage.total_tokens       # total tokens used
 ansa.cost.naira         # total cost in Naira ← primary
 ansa.cost.naira_input   # input cost in Naira
 ansa.cost.naira_output  # output cost in Naira
-ansa.cost.dollars       # cost in USD (if available)
 
 # Identity
 ansa.is_local                # True — runs on Nigerian hardware
@@ -241,10 +238,8 @@ Enable extended thinking for complex problems:
 ansa = client.gist(
     model="confam-reasoning",
     messages="One trader buy goods for ₦50,000 sell am for ₦75,000. After e pay ₦5,000 for transport and ₦3,000 for market, wetin be the real profit? Show how you calculate am.",
-    allowed_openai_params=["reasoning_effort"],
-    reasoning_effort={"effort": "low", "summary": "detailed"}
-    # effort: "low", "medium", "high", or "xhigh"
-    # summary: "detailed" or "concise"
+    reasoning_effort="low"
+    # one of: "xhigh", "high", "medium", "low", "minimal", "none"
 )
 
 print(ansa.reasoning)   # thinking trace
@@ -257,8 +252,7 @@ Also available on `confam-deep-reasoning` for more complex multi-step problems:
 ansa = client.gist(
     model="confam-deep-reasoning",
     messages="Analyse the financial risk of a Nigerian fintech expanding to Ghana...",
-    allowed_openai_params=["reasoning_effort"],
-    reasoning_effort={"effort": "high", "summary": "detailed"}
+    reasoning_effort="high"
 )
 
 print(ansa.reasoning)   # full thinking trace
