@@ -1,0 +1,3 @@
+DEFAULT_BASE_URL = "https://api.confamnode.com/v1"
+DEFAULT_TIMEOUT = 300.0
+DEFAULT_CONNECT_TIMEOUT = 10.0

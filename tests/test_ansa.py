@@ -1,4 +1,3 @@
-import pytest
 from confamnode.ansa import Ansa, Usage, Cost
 
 
