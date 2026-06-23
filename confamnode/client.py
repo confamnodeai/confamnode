@@ -1,17 +1,15 @@
 import os
-import litellm
+import json
+import httpx
 
 from typing import Union, List, Dict
 
+from confamnode.builders import parse_chunk
 from confamnode.ansa import Ansa, Usage, Cost
-from confamnode.prompts import CONFAMNODE_SYSTEM_MESSAGE
-from confamnode.registry import VALID_MODELS, LOCAL_MODELS
-from confamnode.utils import sanitize_raw, sanitize_stream_raw
+from confamnode.registry import VALID_MODELS
 from confamnode.exceptions import ConfamAuthError, ConfamModelError
+from confamnode.config import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT
 
-
-DEFAULT_BASE_URL = "https://api.confamnode.com/v1"
-DEFAULT_USD_TO_NAIRA = 1400.0
 
 class ConfamNode:
     def __init__(
@@ -29,7 +27,6 @@ class ConfamNode:
             raise ConfamAuthError()
         
         self.api_key = api_key
-        self.litellm_key = "sk-" + api_key.removeprefix("confam-")
         self.base_url = base_url or DEFAULT_BASE_URL
 
     def gist(
@@ -38,7 +35,7 @@ class ConfamNode:
         messages: Union[str, List[Dict[str, str]]],
         system: str | None = "default",
         **kwargs
-    ) -> Ansa:
+    ) -> "Ansa | ConfamStream":
         if model not in VALID_MODELS:
             raise ConfamModelError(model)
         
@@ -48,102 +45,130 @@ class ConfamNode:
         elif not isinstance(messages, list):
             raise ValueError("messages must be a string or list")
         
-        # Check if system message is already in list
-        has_system_in_messages = any(m.get("role") == "system" for m in messages)
+        body = {
+            "model": model,
+            "messages": messages,
+            **kwargs
+        }
 
-        # Inject system message
+        # System message tri-state
+        has_system_in_messages = any(m.get("role") == "system" for m in messages)
         if not has_system_in_messages:
             if system == "default":
-                # Use ConfamNode default identity
-                messages = [{"role": "system", "content": CONFAMNODE_SYSTEM_MESSAGE}] + messages
-            elif system is not None:
-                # Use custom system message
-                messages = [{"role": "system", "content": system}] + messages
-            # system=None -> no system message added
+                pass 
+            else:
+                body["system"] = system # None or custom string
 
         if kwargs.get("stream", False):
-            raw = litellm.completion(
-                model=f"openai/{model}",
-                messages=messages,
-                api_key=self.litellm_key,
-                base_url=self.base_url,
-                **kwargs
+            http_client = httpx.Client(
+                timeout=httpx.Timeout(DEFAULT_TIMEOUT, connect=DEFAULT_CONNECT_TIMEOUT)
             )
-            return ConfamStream(raw, model)
+            req = http_client.build_request(
+                "POST",
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=body,
+            )
+            stream_response = http_client.send(req, stream=True)
+
+            if stream_response.status_code >= 400:
+                stream_response.read()
+                stream_response.close()
+                http_client.close()
+                error = stream_response.json().get("detail", "Requeest failed")
+                raise Exception(f"ConfamNode error {stream_response.status_code}: {error}")
+            
+            return ConfamStream(stream_response, http_client, model)
         
-        raw = litellm.completion(
-            model=f"openai/{model}",
-            messages=messages,
-            api_key=self.litellm_key,
-            base_url=self.base_url,
-            **kwargs
+        response = httpx.post(
+            f"{self.base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            json=body,
+            timeout=httpx.Timeout(DEFAULT_TIMEOUT, connect=DEFAULT_CONNECT_TIMEOUT)
         )
 
-        hidden = getattr(raw, "_hidden_params", {})
-        naira_cost = float(hidden.get("x_confam_naira_cost", 0.0))
-        naira_input = float(hidden.get("x_confam_naira_input", 0.0))
-        naira_output = float(hidden.get("x_confam_naira_output", 0.0))
-        usd_cost = hidden.get("x_confam_usd_cost", None)
-        if usd_cost is not None:
-            usd_cost = float(usd_cost)
+        if response.status_code >= 400:
+            error = response.json().get("detail", "Request failed")
+            raise Exception(f"ConfamNode error {response.status_code}: {error}")
 
-        # Extract text
-        text = raw.choices[0].message.content or ""
-
-        # Extract reasoning if present
-        reasoning = getattr(raw.choices[0].message, "reasoning_content", None)
-
-        # Extract tool calls if present
-        tools = []
-        if hasattr(raw.choices[0].message, "tool_calls") and raw.choices[0].message.tool_calls:
-            tools = raw.choices[0].message.tool_calls
-
-        # Extract citations
-        citations = []
-        if hasattr(raw.choices[0].message, "citations") and raw.choices[0].message.citations:
-            citations = raw.choices[0].message.citations
-
-        # Extract usage
-        usage = Usage(
-            prompt_tokens=raw.usage.prompt_tokens,
-            completion_tokens=raw.usage.completion_tokens,
-            total_tokens=raw.usage.total_tokens,
-        )
-
-        cost = Cost(
-            naira=naira_cost,
-            naira_input=naira_input,
-            naira_output=naira_output,
-            dollars=usd_cost
-        )
+        data = response.json()
+        msg = data["choices"][0]["message"]
+        usage_data = data.get("usage", {})
+        confam = data.get("confam", {})
+        cost_data = confam.get("cost", {})
 
         return Ansa(
-            text=text,
+            id=confam.get("request_id", data.get("id", "")),
+            text=msg.get("content") or "",
             model=model,
-            reasoning=reasoning,
-            tools=tools,
-            citations=citations,
-            usage=usage,
-            cost=cost,
-            finish_reason=raw.choices[0].finish_reason,
-            raw=sanitize_raw(raw),
-            is_local=model in LOCAL_MODELS,
-            is_ngn_data_residency=model in LOCAL_MODELS
+            reasoning=msg.get("reasoning"),
+            tools=msg.get("tool_calls") or [],
+            citations=msg.get("citations") or [],
+            usage=Usage(
+                prompt_tokens=usage_data.get("prompt_tokens", 0),
+                completion_tokens=usage_data.get("completion_tokens", 0),
+                total_tokens=usage_data.get("total_tokens", 0),
+            ),
+            cost=Cost(
+                naira=cost_data.get("naira", 0.0),
+                naira_input=cost_data.get("naira_input", 0.0),
+                naira_output=cost_data.get("naira_output", 0.0),
+            ),
+            finish_reason=data["choices"][0].get("finish_reason", "stop"),
+            raw={
+                "id": data.get("id"),
+                "usage": {
+                    "prompt_tokens": usage_data.get("prompt_tokens", 0),
+                    "completion_tokens": usage_data.get("completion_tokens", 0)
+                }
+            },
+            is_local=confam.get("is_local", False),
+            is_ngn_data_residency=confam.get("is_ngn_data_residency", False),
         )
     
 
 class ConfamStream:
-    def __init__(self, raw_stream, model: str):
-        self._raw_stream = raw_stream
+    def __init__(self, stream_response, http_client, model: str):
+        self._stream_response = stream_response
+        self._http_client = http_client
         self._model = model
         self._chunks = []
         self._ansa = None
+        self._confam_meta = {}
 
     def __iter__(self):
-        for yarn in self._raw_stream:
-            self._chunks.append(yarn)
-            yield yarn
-        # Build Ansa after stream completes
+        try:
+            for line in self._stream_response.iter_lines():
+                if not line or not line.startswith("data: "):
+                    continue
+                payload_str = line[len("data: "):]
+                if payload_str.strip() == "[DONE]":
+                    break
+                try:
+                    raw = json.loads(payload_str)
+                except json.JSONDecodeError:
+                    continue
+
+                if "confam" in raw:
+                    self._confam_meta = raw["confam"]
+                    continue
+
+                if not raw.get("choices"):
+                    continue
+
+                chunk = parse_chunk(raw)
+                self._chunks.append(chunk)
+                yield chunk
+        finally:
+            self._stream_response.close()
+            self._http_client.close()
+
         self._ansa = self._build_ansa()
 
     def get_ansa(self) -> Ansa:
@@ -156,29 +181,30 @@ class ConfamStream:
         text = "".join([
             c.choices[0].delta.content or ""
             for c in self._chunks
-            if c.choices[0].delta.content
+            if c.choices and c.choices[0].delta.content
         ])
 
         # Get finish reason from last chunk
-        finish_reason = self._chunks[-1].choices[0].finish_reason if self._chunks else "stop"
+        if self._chunks and self._chunks[-1].choices:
+            finish_reason = self._chunks[-1].choices[0].finish_reason or "stop"
 
-        # Usage — only available in last chunk for some providers
-        last_chunk = self._chunks[-1] if self._chunks else None
-        usage = Usage(
-            prompt_tokens=getattr(getattr(last_chunk, "usage", None), "prompt_tokens", 0),
-            completion_tokens=getattr(getattr(last_chunk, "usage", None), "completion_tokens", 0),
-            total_tokens=getattr(getattr(last_chunk, "usage", None), "total_tokens", 0),
-        )
-
-        cost = Cost(naira=0.0) 
+        cost_data = self._confam_meta.get("cost", {})
 
         return Ansa(
+            id=self._confam_meta.get("request_id", ""),
             text=text,
             model=self._model,
-            usage=usage,
-            cost=cost,
+            usage=Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
+            cost=Cost(
+                naira=cost_data.get("naira", 0.0),
+                naira_input=cost_data.get("naira_input", 0.0),
+                naira_output=cost_data.get("naira_output", 0.0),
+            ),
             finish_reason=finish_reason,
-            raw=sanitize_stream_raw(self._chunks, finish_reason, getattr(last_chunk, "usage", None)),
-            is_local=self._model in LOCAL_MODELS,
-            is_ngn_data_residency=self._model in LOCAL_MODELS,
+            raw={
+                "id": self._confam_meta.get("request_id", ""),
+                "usage": {"prompt_tokens": 0, "completion_tokens": 0}
+            },
+            is_local=self._confam_meta.get("is_local", False),
+            is_ngn_data_residency=self._confam_meta.get("is_ngn_data_residency", False),
         )

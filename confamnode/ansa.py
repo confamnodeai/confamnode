@@ -31,3 +31,24 @@ class Ansa:
     id: str = field(default_factory=lambda: f"confam-{uuid.uuid4()}")
     is_local: bool = False
     is_ngn_data_residency: bool = False
+
+
+@dataclass
+class StreamDelta:
+    role: str | None = None
+    content: str | None = None
+    reasoning: str | None = None
+
+
+@dataclass
+class StreamChoice:
+    index: int = 0
+    delta: StreamDelta = field(default_factory=StreamDelta)
+    finish_reason: str | None = None
+
+
+@dataclass
+class StreamChunk:
+    id: str = ""
+    model: str = ""
+    choices: list = field(default_factory=list)
