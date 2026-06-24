@@ -188,13 +188,18 @@ class ConfamStream:
         if self._chunks and self._chunks[-1].choices:
             finish_reason = self._chunks[-1].choices[0].finish_reason or "stop"
 
+        usage_data = self._confam_meta.get("usage", {})
         cost_data = self._confam_meta.get("cost", {})
 
         return Ansa(
             id=self._confam_meta.get("request_id", ""),
             text=text,
             model=self._model,
-            usage=Usage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
+            usage=Usage(
+                prompt_tokens=usage_data.get("prompt_tokens", 0), 
+                completion_tokens=usage_data.get("completion_tokens", 0), 
+                total_tokens=usage_data.get("total_tokens", 0),
+            ),
             cost=Cost(
                 naira=cost_data.get("naira", 0.0),
                 naira_input=cost_data.get("naira_input", 0.0),
@@ -203,7 +208,11 @@ class ConfamStream:
             finish_reason=finish_reason,
             raw={
                 "id": self._confam_meta.get("request_id", ""),
-                "usage": {"prompt_tokens": 0, "completion_tokens": 0}
+                "usage": {
+                    "prompt_tokens": usage_data.get("prompt_tokens", 0), 
+                    "completion_tokens": usage_data.get("completion_tokens", 0),
+                    "total_tokens": usage_data.get("total_tokens", 0)
+                }
             },
             is_local=self._confam_meta.get("is_local", False),
             is_ngn_data_residency=self._confam_meta.get("is_ngn_data_residency", False),
