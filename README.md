@@ -230,6 +230,32 @@ ansa = client.gist(
 
 ---
 
+## Caching
+
+Caching is controlled **per request** and is **off by default** — every call returns a fresh response, even when the request is identical. This keeps data-generation loops and any workflow that resends the same prompt from getting the same cached answer back each time.
+
+Pass `cache=True` to read from and write to the cache — useful for idempotent lookups or to save cost on repeated queries:
+
+```python
+# Default — caching off, fresh response every call
+ansa = client.gist(
+    model="confam-speed",
+    messages="How you dey?"
+)
+
+# Enable caching — use a stored response when the request matches,
+# and store this response for next time
+ansa = client.gist(
+    model="confam-speed",
+    messages="How you dey?",
+    cache=True
+)
+```
+
+A cache hit is typically returned near-instantly and at little or no token cost — a quick way to confirm caching is active.
+
+---
+
 ## Reasoning Models
 
 Enable extended thinking for complex problems:
@@ -317,7 +343,7 @@ For enterprise clients running ConfamNode on private infrastructure:
 ```python
 client = ConfamNode(
     api_key="confam-xxx",
-    base_url="http://your-private-server:8000/v1"
+    base_url="http://your-private-server:4000/v1"
 )
 ```
 
