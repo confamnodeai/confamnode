@@ -234,7 +234,7 @@ ansa = client.gist(
 
 Caching is controlled **per request** and is **off by default** — every call returns a fresh response, even when the request is identical. This keeps data-generation loops and any workflow that resends the same prompt from getting the same cached answer back each time.
 
-Pass `cache=True` to let the gateway serve and store a cached response — useful for idempotent lookups or to save cost on repeated queries:
+Pass `cache=True` to let the gateway serve and store a cached response — useful for idempotent lookups:
 
 ```python
 # Default — caching off, fresh response every call
