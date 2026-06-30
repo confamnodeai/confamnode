@@ -4,6 +4,7 @@ import httpx
 
 from typing import Union, List, Dict
 
+from confamnode.utils import extract_error
 from confamnode.builders import parse_chunk
 from confamnode.ansa import Ansa, Usage, Cost
 from confamnode.registry import VALID_MODELS
@@ -76,10 +77,11 @@ class ConfamNode:
 
             if stream_response.status_code >= 400:
                 stream_response.read()
+                status = stream_response.status_code
+                error = extract_error(stream_response)
                 stream_response.close()
                 http_client.close()
-                error = stream_response.json().get("detail", "Requeest failed")
-                raise Exception(f"ConfamNode error {stream_response.status_code}: {error}")
+                raise Exception(f"ConfamNode error {status}: {error}")
             
             return ConfamStream(stream_response, http_client, model)
         
@@ -94,7 +96,7 @@ class ConfamNode:
         )
 
         if response.status_code >= 400:
-            error = response.json().get("detail", "Request failed")
+            error = extract_error(response)
             raise Exception(f"ConfamNode error {response.status_code}: {error}")
 
         data = response.json()
