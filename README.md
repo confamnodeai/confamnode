@@ -234,7 +234,7 @@ ansa = client.gist(
 
 Caching is controlled **per request** and is **off by default** — every call returns a fresh response, even when the request is identical. This keeps data-generation loops and any workflow that resends the same prompt from getting the same cached answer back each time.
 
-Pass `cache=True` to read from and write to the cache — useful for idempotent lookups or to save cost on repeated queries:
+Pass `cache=True` to let the gateway serve and store a cached response — useful for idempotent lookups or to save cost on repeated queries:
 
 ```python
 # Default — caching off, fresh response every call
@@ -243,8 +243,8 @@ ansa = client.gist(
     messages="How you dey?"
 )
 
-# Enable caching — use a stored response when the request matches,
-# and store this response for next time
+# Enable caching — the gateway may return a stored response for a
+# matching request, and store this one for next time
 ansa = client.gist(
     model="confam-speed",
     messages="How you dey?",
@@ -252,7 +252,7 @@ ansa = client.gist(
 )
 ```
 
-A cache hit is typically returned near-instantly and at little or no token cost — a quick way to confirm caching is active.
+Caching must be enabled for your account for `cache=True` to take effect. A cache hit returns near-instantly — the quickest way to see it is to send the **same** request twice with `cache=True`: the first call populates the cache, the second is served from it.
 
 ---
 

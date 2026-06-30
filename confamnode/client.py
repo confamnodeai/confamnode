@@ -61,20 +61,17 @@ class ConfamNode:
             else:
                 body["system"] = system # None or custom string
 
-        # Caching is controlled per request. By default the SDK opts OUT, so
-        # identical requests (same model + messages + system) each return a
+        # Caching is opt-in. By default the SDK sends an explicit cache-bypass,
+        # so identical requests (same model + messages + system) each return a
         # FRESH response -- important for data-generation loops that resend the
-        # same prompt expecting varied output. Pass cache=True to read from and
-        # write to the cache (idempotent lookups, cost savings on repeats).
+        # same prompt expecting varied output.
         #
-        # These flags only tell the gateway whether to use a cache for THIS
-        # request; whether one exists at all is a gateway-side capability.
-        if cache:
-            body["cache"] = {
-                "no-cache": False, # Cache the response
-                "no-store": False # Store the response
-            }
-        else:
+        # With cache=True we send NO cache field at all, letting the gateway
+        # apply its normal caching. That absent-field shape is exactly what
+        # produced cached responses before this flag existed, so it's the
+        # request form known to engage the cache -- more reliable than sending
+        # explicit "false" flags the gateway may not interpret identically.
+        if not cache:
             body["cache"] = {
                 "no-cache": True, # Skip cache check, get fresh response
                 "no-store": True # Don't cache this response
