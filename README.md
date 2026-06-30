@@ -150,25 +150,25 @@ ansa.raw["usage"]            # prompt and completion token counts
 
 ### Free Tier
 
-| Model | Description | Price |
-|---|---|---|
-| `confam-lite` | Light text and general chat | Free |
-| `confam-speed` | Fast, high quality responses | Free |
-| `confam-reasoning` | Standard reasoning and analysis | Free |
+| Model | Description | Modality | Price |
+|---|---|---|---|
+| `confam-lite` | Light text and general chat | Text-to-Text | Free |
+| `confam-speed` | Fast, high quality responses | Image-Text-to-Text | Free |
+| `confam-reasoning` | Standard reasoning and analysis | Text-to-Text | Free |
 
 ### Paid Tier
 
-| Model | Description | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
-|---|---|---|---|---|---|
-| `confam-intelligence` | General smart tasks, 1M context | ₦596 | ₦3,571 | ₦0.596 | ₦3.571 |
-| `confam-deep-reasoning` | Complex thinking, multi-step analysis | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
-| `confam-code` | Coding assistance, 1M context | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
+| Model | Description | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
+|---|---|---|---|---|---|---|
+| `confam-intelligence` | General smart tasks, 1M context | Image-Text-to-Text | ₦596 | ₦3,571 | ₦0.596 | ₦3.571 |
+| `confam-deep-reasoning` | Complex thinking, multi-step analysis | Image-Text-to-Text | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
+| `confam-code` | Coding assistance, 1M context | Image-Text-to-Text | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
 
 ### Local Models — Nigerian Data Residency
 
-| Model | Description | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
-|---|---|---|---|---|---|
-| `confam-nano` | Local model — data stays in Nigeria | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
+| Model | Description | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
+|---|---|---|---|---|---|---|
+| `confam-nano` | Local model — data stays in Nigeria | Image-Text-to-Text | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
 
 Runs entirely on Nigerian hardware. Data never transmitted abroad.
 Ideal for banks, fintechs, hospitals, law firms, and government agencies.
@@ -317,7 +317,7 @@ For enterprise clients running ConfamNode on private infrastructure:
 ```python
 client = ConfamNode(
     api_key="confam-xxx",
-    base_url="http://your-private-server:4000/v1"
+    base_url="http://your-private-server:8000/v1"
 )
 ```
 
