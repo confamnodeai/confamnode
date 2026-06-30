@@ -18,7 +18,6 @@ API_KEY = "confam-test"
 MODEL = next(iter(VALID_MODELS))
 
 CACHE_OFF = {"no-cache": True, "no-store": True}    # skip read + skip store
-CACHE_ON = {"no-cache": False, "no-store": False}   # use + store
 
 
 @pytest.fixture
@@ -55,20 +54,13 @@ def test_cache_off_by_default(captured_body):
     assert captured_body["body"]["cache"] == CACHE_OFF
 
 
-def test_cache_true_uses_and_stores(captured_body):
+def test_cache_true_omits_field(captured_body):
+    # cache=True lets the gateway apply its normal caching by sending NO cache
+    # field -- the request shape proven to engage the cache.
     _gist(cache=True)
-    assert captured_body["body"]["cache"] == CACHE_ON
+    assert "cache" not in captured_body["body"]
 
 
 def test_cache_false_is_explicit_off(captured_body):
     _gist(cache=False)
     assert captured_body["body"]["cache"] == CACHE_OFF
-
-
-def test_cache_field_always_present(captured_body):
-    # The request should always state its caching intent in both directions,
-    # never leave it implied by omission.
-    _gist()
-    assert "cache" in captured_body["body"]
-    _gist(cache=True)
-    assert "cache" in captured_body["body"]
