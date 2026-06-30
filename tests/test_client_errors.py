@@ -58,14 +58,20 @@ def test_json_detail_error_surfaces_detail(monkeypatch):
     assert "invalid model" in str(exc.value)
 
 
-def test_html_gateway_error_surfaces_text(monkeypatch):
-    _patch_post(monkeypatch, FakeResponse(502, json_raises=True,
-                                          text="<html>502 Bad Gateway</html>"))
+def test_html_gateway_error_surfaces_title(monkeypatch):
+    html = (
+        "<!DOCTYPE html><html><head>"
+        "<title>confamnode.com | 524: A timeout occurred</title>"
+        "</head><body>...</body></html>"
+    )
+    _patch_post(monkeypatch, FakeResponse(524, json_raises=True, text=html))
     client = ConfamNode(api_key=API_KEY)
     with pytest.raises(Exception) as exc:
         client.gist(model=MODEL, messages="hi")
-    assert "502" in str(exc.value)
-    assert "Bad Gateway" in str(exc.value)
+    msg = str(exc.value)
+    assert "524" in msg
+    assert "A timeout occurred" in msg
+    assert "<html" not in msg   # the page itself must NOT be dumped into the error
 
 
 def test_success_path_still_returns_ansa(monkeypatch):
