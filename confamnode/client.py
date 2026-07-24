@@ -4,11 +4,11 @@ import httpx
 
 from typing import Union, List, Dict
 
-from confamnode.utils import extract_error
 from confamnode.builders import parse_chunk
-from confamnode.ansa import Ansa, Usage, Cost
 from confamnode.registry import VALID_MODELS
+from confamnode.utils import raise_for_status
 from confamnode.exceptions import ConfamAuthError, ConfamModelError
+from confamnode.ansa import Ansa, Usage, Cost, EmbeddingResult, EmbeddingUsage
 from confamnode.config import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT
 
 
@@ -94,11 +94,11 @@ class ConfamNode:
 
             if stream_response.status_code >= 400:
                 stream_response.read()
-                status = stream_response.status_code
-                error = extract_error(stream_response)
-                stream_response.close()
-                http_client.close()
-                raise Exception(f"ConfamNode error {status}: {error}")
+                try:
+                    raise_for_status(stream_response)
+                finally:
+                    stream_response.close()
+                    http_client.close()
             
             return ConfamStream(stream_response, http_client, model)
         
@@ -112,9 +112,7 @@ class ConfamNode:
             timeout=httpx.Timeout(DEFAULT_TIMEOUT, connect=DEFAULT_CONNECT_TIMEOUT)
         )
 
-        if response.status_code >= 400:
-            error = extract_error(response)
-            raise Exception(f"ConfamNode error {response.status_code}: {error}")
+        raise_for_status(response)
 
         data = response.json()
         msg = data["choices"][0]["message"]
@@ -149,6 +147,71 @@ class ConfamNode:
             },
             is_local=confam.get("is_local", False),
             is_ngn_data_residency=confam.get("is_ngn_data_residency", False),
+        )
+
+    def embed(
+        self,
+        model: str,
+        input: Union[str, List[str]],
+        task_type: str | None = None,
+        **kwargs
+    ) -> EmbeddingResult:
+        if model not in VALID_MODELS:
+            raise ConfamModelError(model)
+
+        body = {
+            "model": model,
+            "input": input,
+            **kwargs
+        }
+
+        # task_type is optional here — the API defaults to "document"
+        # server-side if omitted, so the SDK doesn't duplicate that
+        # default; only send it if the caller actually specified one.
+        if task_type is not None:
+            body["task_type"] = task_type
+
+        response = httpx.post(
+            f"{self.base_url}/embeddings",
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            json=body,
+            timeout=httpx.Timeout(DEFAULT_TIMEOUT, connect=DEFAULT_CONNECT_TIMEOUT)
+        )
+
+        raise_for_status(response)
+
+        data = response.json()
+        usage_data = data.get("usage", {})
+        confam = data.get("confam", {})
+        cost_data = confam.get("cost", {})
+
+        raw_embeddings = [item["embedding"] for item in data.get("data", [])]
+
+        # Convenience unwrapping: a caller who passed a single string
+        # expects one vector back, not a one-item list. A caller who
+        # passed a list always gets a list back, even with one item —
+        # input shape determines output shape, consistently.
+        embeddings = raw_embeddings[0] if isinstance(input, str) else raw_embeddings
+
+        return EmbeddingResult(
+            id=confam.get("request_id", ""),
+            embeddings=embeddings,
+            model=data.get("model", model),
+            usage=EmbeddingUsage(
+                prompt_tokens=usage_data.get("prompt_tokens", 0),
+                total_tokens=usage_data.get("total_tokens", 0),
+            ),
+            cost=Cost(
+                naira=cost_data.get("naira", 0.0),
+                naira_input=cost_data.get("naira_input", 0.0),
+            ),
+            raw=data,
+            is_local=confam.get("is_local", False),
+            is_ngn_data_residency=confam.get("is_ngn_data_residency", False),
+            task_type_applied=confam.get("task_type_applied"),
         )
     
 

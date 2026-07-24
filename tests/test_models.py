@@ -1,8 +1,8 @@
 from confamnode.models import (
     LITE, SPEED, REASONING,
     INTELLIGENCE, DEEP_REASONING, CODE, CODE_PRO, VISION, AUDIO, TTS,
-    NANO,
-    EMBED_TEXT, EMBED_MULTIMODAL, EMBED_MULTIMODAL_2, EMBED_TEXT_LOCAL,
+    HEALTH, LOCAL,
+    EMBED_TEXT, EMBED_MULTIMODAL, EMBED_MULTIMODAL_2, EMBED_LOCAL,
     EMBED_TEXT_PRO, EMBED_MULTIMODAL_PRO, EMBED_MULTILINGUAL,
     EMBED_SMALL, EMBED_0_6B,
     RERANK, RERANK_FAST,
@@ -20,11 +20,12 @@ def test_model_constants_are_strings():
     assert isinstance(VISION, str)
     assert isinstance(AUDIO, str)
     assert isinstance(TTS, str)
-    assert isinstance(NANO, str)
+    assert isinstance(HEALTH, str)
+    assert isinstance(LOCAL, str)
     assert isinstance(EMBED_TEXT, str)
     assert isinstance(EMBED_MULTIMODAL, str)
     assert isinstance(EMBED_MULTIMODAL_2, str)
-    assert isinstance(EMBED_TEXT_LOCAL, str)
+    assert isinstance(EMBED_LOCAL, str)
     assert isinstance(EMBED_TEXT_PRO, str)
     assert isinstance(EMBED_MULTIMODAL_PRO, str)
     assert isinstance(EMBED_MULTILINGUAL, str)
@@ -45,11 +46,12 @@ def test_model_constants_start_with_confam():
     assert VISION.startswith("confam-")
     assert AUDIO.startswith("confam-")
     assert TTS.startswith("confam-")
-    assert NANO.startswith("confam-")
+    assert HEALTH.startswith("confam-")
+    assert LOCAL.startswith("confam-")
     assert EMBED_TEXT.startswith("confam-")
     assert EMBED_MULTIMODAL.startswith("confam-")
     assert EMBED_MULTIMODAL_2.startswith("confam-")
-    assert EMBED_TEXT_LOCAL.startswith("confam-")
+    assert EMBED_LOCAL.startswith("confam-")
     assert EMBED_TEXT_PRO.startswith("confam-")
     assert EMBED_MULTIMODAL_PRO.startswith("confam-")
     assert EMBED_MULTILINGUAL.startswith("confam-")
@@ -70,11 +72,12 @@ def test_model_constants_have_correct_values():
     assert VISION == "confam-vision"
     assert AUDIO == "confam-audio"
     assert TTS == "confam-tts"
-    assert NANO == "confam-nano"
+    assert HEALTH == "confam-health"
+    assert LOCAL == "confam-local"
     assert EMBED_TEXT == "confam-embed-text-1"
     assert EMBED_MULTIMODAL == "confam-embed-multimodal-1"
     assert EMBED_MULTIMODAL_2 == "confam-embed-multimodal-2"
-    assert EMBED_TEXT_LOCAL == "confam-embed-text-local"
+    assert EMBED_LOCAL == "confam-embed-local"
     assert EMBED_TEXT_PRO == "confam-embed-text-pro"
     assert EMBED_MULTIMODAL_PRO == "confam-embed-multimodal-pro"
     assert EMBED_MULTILINGUAL == "confam-embed-multilingual"
@@ -82,3 +85,11 @@ def test_model_constants_have_correct_values():
     assert EMBED_0_6B == "confam-embed-0.6b"
     assert RERANK == "confam-rerank"
     assert RERANK_FAST == "confam-rerank-fast"
+
+
+def test_nano_is_fully_retired():
+    # Guards against NANO quietly reappearing in a future edit — see
+    # confamnode-changelog.md, confam-nano retirement, and this
+    # session's SDK-side registry.py/models.py fix.
+    import confamnode.models as models
+    assert not hasattr(models, "NANO")

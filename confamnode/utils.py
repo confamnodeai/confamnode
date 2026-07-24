@@ -4,6 +4,14 @@ Small internal helpers shared across the confamnode client.
 
 
 import re
+from confamnode.exceptions import (
+    ConfamAuthError,
+    ConfamNodeError,
+    ConfamRequestError,
+    ConfamProviderError,
+    ConfamRateLimitError,
+    ConfamInsufficientBalanceError,
+)
 
 
 def extract_error(response) -> str:
@@ -46,3 +54,37 @@ def extract_error(response) -> str:
     
     # 3. Plain-text body: return it, truncated so we never dump a wall.
     return text if len(text) <= 300 else text[:297] + "..."
+
+
+def raise_for_status(response):
+    """
+    Maps an HTTP error response to correct typed ConfamNode exception.
+    Shared by gist() and embed() so both endpoints raise consistently.
+
+    The status code is always embedded in the raised message (e.g.
+    "ConfamNode error 429: ...") regardless of which typed exception is
+    used -- this keeps the status code visible/greppable in logs and
+    error messages even though the exception TYPE is what callers should
+    actually catch programmatically.
+    """
+    if response.status_code < 400:
+        return
+
+    error = extract_error(response)
+    status = response.status_code
+    msg = f"ConfamNode error {status}: {error}"
+
+
+    if status == 401:
+        raise ConfamAuthError(msg)
+    if status == 402:
+        raise ConfamInsufficientBalanceError(msg)
+    if status == 429:
+        raise ConfamRateLimitError(msg)
+    if status in (502, 503, 504):
+        raise ConfamProviderError(msg)
+    if status < 500:
+        raise ConfamRequestError(msg)
+    # Genuinely unexpected 5xx not covered above
+    raise ConfamNodeError(msg)
+

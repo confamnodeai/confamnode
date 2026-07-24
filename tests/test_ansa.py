@@ -1,4 +1,10 @@
-from confamnode.ansa import Ansa, Usage, Cost
+from confamnode.ansa import (
+    Ansa, 
+    Cost,
+    Usage,
+    EmbeddingUsage,
+    EmbeddingResult,
+)
 
 
 def test_usage_has_prompt_tokens():
@@ -332,3 +338,132 @@ def test_ansa_raw_has_id():
         raw = {"id": "confam-resp-abc123", "finish_reason": "stop", "usage": {}}
     )
     assert ansa.raw["id"] == "confam-resp-abc123"
+
+
+def test_embedding_usage_has_prompt_tokens():
+    usage = EmbeddingUsage(prompt_tokens=15, total_tokens=15)
+    assert usage.prompt_tokens == 15
+
+
+def test_embedding_usage_has_total_tokens():
+    usage = EmbeddingUsage(prompt_tokens=15, total_tokens=15)
+    assert usage.total_tokens == 15
+
+
+def test_embedding_usage_has_no_completion_tokens_field():
+    # Embeddings have no output tokens to bill -- deliberately no
+    # completion_tokens field, unlike chat Usage.
+    usage = EmbeddingUsage(prompt_tokens=15, total_tokens=15)
+    assert not hasattr(usage, "completion_tokens")
+
+
+def test_embedding_result_has_embeddings():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1, 0.2, 0.3],
+        model="confam-embed-local",
+        usage=usage,
+        cost=cost,
+        raw={}
+    )
+    assert result.embeddings == [0.1, 0.2, 0.3]
+
+
+def test_embedding_result_has_model():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1, 0.2],
+        model="confam-embed-local",
+        usage=usage,
+        cost=cost,
+        raw={}
+    )
+    assert result.model == "confam-embed-local"
+
+
+def test_embedding_result_has_id():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1, 0.2],
+        model="confam-embed-local",
+        usage=usage,
+        cost=cost,
+        raw={}
+    )
+    assert result.id.startswith("confam-")
+
+
+def test_embedding_result_is_local_defaults_to_false():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1],
+        model="confam-embed-text-1",
+        usage=usage,
+        cost=cost,
+        raw={}
+    )
+    assert result.is_local is False
+    assert result.is_ngn_data_residency is False
+
+
+def test_embedding_result_accepts_is_local_true():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1],
+        model="confam-embed-local",
+        usage=usage,
+        cost=cost,
+        raw={},
+        is_local=True,
+        is_ngn_data_residency=True
+    )
+    assert result.is_local is True
+    assert result.is_ngn_data_residency is True
+
+
+def test_embedding_result_task_type_applied_defaults_to_none():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1],
+        model="confam-embed-text-1",
+        usage=usage,
+        cost=cost,
+        raw={}
+    )
+    assert result.task_type_applied is None
+
+
+def test_embedding_result_accepts_task_type_applied():
+    usage = EmbeddingUsage(prompt_tokens=5, total_tokens=5)
+    cost = Cost(naira=0.5)
+    result = EmbeddingResult(
+        embeddings=[0.1],
+        model="confam-embed-local",
+        usage=usage,
+        cost=cost,
+        raw={},
+        task_type_applied="document"
+    )
+    assert result.task_type_applied == "document"
+
+
+def test_embedding_result_handles_list_of_vectors():
+    # A multi-input embed() call returns a list of vectors, not one --
+    # this is the shape when the caller passed a list, not a string.
+    usage = EmbeddingUsage(prompt_tokens=10, total_tokens=10)
+    cost = Cost(naira=1.0)
+    result = EmbeddingResult(
+        embeddings=[[0.1, 0.2], [0.3, 0.4]],
+        model="confam-embed-local",
+        usage=usage,
+        cost=cost,
+        raw={}
+    )
+    assert len(result.embeddings) == 2
+    assert result.embeddings[0] == [0.1, 0.2]

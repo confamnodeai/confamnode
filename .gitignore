@@ -20,6 +20,7 @@ dist/
 .pytest_cache/
 
 # Test files
+live_tests/
 chat_test.py
 stream_test.py
 exchange_rate_calc.py
