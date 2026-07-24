@@ -39,8 +39,9 @@ CLOUD_MODELS = {
 # Local Models — inference on Nigerian hardware, Nigeria data residency
 # =========================================================================
 LOCAL_MODELS = {
-    models.NANO,
-    models.EMBED_TEXT_LOCAL,
+    models.HEALTH,
+    models.LOCAL,
+    models.EMBED_LOCAL,
 }
 
 # =========================================================================

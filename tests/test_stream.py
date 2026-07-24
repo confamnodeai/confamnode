@@ -129,13 +129,13 @@ def test_gist_stream_ansa_cost_from_confam_chunk(client):
 
 def test_gist_stream_ansa_is_local_from_confam_chunk(client):
     sse_lines = [
-        'data: {"id":"t","object":"chat.completion.chunk","created":1,"model":"confam-nano","choices":[{"index":0,"delta":{"content":"hi"},"finish_reason":null}]}',
+        'data: {"id":"t","object":"chat.completion.chunk","created":1,"model":"confam-local","choices":[{"index":0,"delta":{"content":"hi"},"finish_reason":null}]}',
         'data: ' + json.dumps({"confam": {"request_id": "confam-x", "cost": {"naira": 0.0, "naira_input": 0.0, "naira_output": 0.0}, "is_local": True, "is_ngn_data_residency": True}}),  # ← add "data: "
         "data: [DONE]"
     ]
     mock_http_client = make_mock_client(sse_lines)
     with patch("confamnode.client.httpx.Client", return_value=mock_http_client):
-        stream = client.gist(model=models.NANO, messages="hi", stream=True)
+        stream = client.gist(model=models.LOCAL, messages="hi", stream=True)
         list(stream)
         ansa = stream.get_ansa()
         assert ansa.is_local is True

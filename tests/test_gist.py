@@ -213,7 +213,7 @@ def test_gist_sets_local_from_confam_object(client, mock_proxy_response):
     mock_proxy_response.json.return_value["confam"]["is_local"] = True
     mock_proxy_response.json.return_value["confam"]["is_ngn_data_residency"] = True
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.NANO, messages="How you dey?")
+        ansa = client.gist(model=models.LOCAL, messages="How you dey?")
         assert ansa.is_local is True
         assert ansa.is_ngn_data_residency is True
 
@@ -226,7 +226,7 @@ def test_sets_is_local_false_for_cloud_model(client, mock_proxy_response):
 
 
 def test_gist_accepts_all_valid_models(client, mock_proxy_response):
-    valid_models = [models.LITE, models.SPEED, models.REASONING, models.NANO]
+    valid_models = [models.LITE, models.SPEED, models.REASONING, models.HEALTH, models.LOCAL]
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
         for model in valid_models:
             ansa = client.gist(model=model, messages="How far?")

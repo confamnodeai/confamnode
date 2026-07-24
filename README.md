@@ -137,12 +137,82 @@ ansa.id                      # unique request ID (confam-xxxx-xxxx)
 
 # Response metadata
 ansa.raw                     # dict with id, finish_reason, usage
-ansa.raw["id"]               # provider response ID
+ansa.raw["id"]                # provider response ID
 ansa.raw["finish_reason"]    # why generation stopped
 ansa.raw["usage"]            # prompt and completion token counts
 ```
 
 > **Note:** `prompt_tokens` includes any system message tokens. This is standard behaviour across all LLM providers (OpenAI, Anthropic, etc.).
+
+---
+
+## Embeddings
+
+Generate embeddings with `client.embed()`. The shape of what you get back mirrors the shape of what you send in: a single string returns one flat vector, a list returns a list of vectors.
+
+```python
+from confamnode import ConfamNode
+
+client = ConfamNode(api_key="confam-xxx")
+
+# Single string in → one flat vector out
+result = client.embed(
+    model="confam-embed-local",
+    input="How you dey?"
+)
+
+print(result.embeddings)       # [0.123, -0.456, ...]
+print(f"Cost: ₦{result.cost.naira:.6f}")
+print(f"Tokens: {result.usage.total_tokens}")
+
+# List in → list of vectors out, always — even with one item
+result = client.embed(
+    model="confam-embed-local",
+    input=["How you dey?", "Wetin dey happen?"]
+)
+
+print(len(result.embeddings))  # 2
+```
+
+`confam-embed-local` is currently the only available embedding model. More coming soon.
+
+### Task types
+
+Some embedding models expect a task-type hint (e.g. `"query"` vs. `"document"`) to produce better embeddings for retrieval use cases. This defaults sensibly server-side if omitted — only pass it if you need a specific one:
+
+```python
+result = client.embed(
+    model="confam-embed-local",
+    input="find me a good jollof rice recipe",
+    task_type="query"
+)
+
+print(result.task_type_applied)  # confirms what actually happened for this call
+```
+
+`task_type_applied` is `None` when the requested model doesn't use task-type hints at all — the field itself tells you whether it had any effect, no separate capability lookup needed.
+
+### The EmbeddingResult Object
+
+```python
+result = client.embed(model="confam-embed-local", input="How you dey?")
+
+result.embeddings            # vector(s) — shape matches your input shape
+result.model                 # model that served the request
+result.usage.prompt_tokens   # input tokens used
+result.usage.total_tokens    # total tokens used (embeddings have no output tokens to bill)
+result.cost.naira            # total cost in Naira
+result.cost.naira_input      # input cost in Naira
+result.is_local              # True — runs on Nigerian hardware
+result.is_ngn_data_residency # True — data never leaves Nigeria
+result.task_type_applied     # which task-type hint was actually applied, if any
+result.id                    # unique request ID
+result.raw                   # full raw response
+```
+
+### Batch limits (`confam-embed-local`)
+
+Self-hosted embedding requests to `confam-embed-local` are served in batches of up to 4 concurrent requests at a time. If you're embedding a large number of documents, being aware of this batching ceiling will give you a more predictable sense of total time than assuming unlimited concurrency.
 
 ---
 
@@ -152,7 +222,6 @@ ansa.raw["usage"]            # prompt and completion token counts
 
 | Model | Description | Modality | Price |
 |---|---|---|---|
-| `confam-lite` | Light text and general chat | Text-to-Text | Free |
 | `confam-speed` | Fast, high quality responses | Image-Text-to-Text | Free |
 | `confam-reasoning` | Standard reasoning and analysis | Text-to-Text | Free |
 
@@ -168,9 +237,18 @@ ansa.raw["usage"]            # prompt and completion token counts
 
 | Model | Description | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
 |---|---|---|---|---|---|---|
-| `confam-nano` | Local model — data stays in Nigeria | Image-Text-to-Text | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
+| `confam-health` | Local model, health information use cases — data stays in Nigeria | Image-Text-to-Text | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
+| `confam-local` | Local model, general-purpose — data stays in Nigeria | Text-to-Text | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
 
-Runs entirely on Nigerian hardware. Data never transmitted abroad.
+### Embeddings
+
+| Model | Description | Where it runs |
+|---|---|---|
+| `confam-embed-local` | Self-hosted text embeddings — data stays in Nigeria | Local |
+
+More embedding models coming soon.
+
+Local models run entirely on Nigerian hardware. Data never transmitted abroad.
 Ideal for banks, fintechs, hospitals, law firms, and government agencies.
 
 More models coming soon. Contact [hello@confamnode.com](mailto:hello@confamnode.com) for early access.
@@ -197,7 +275,7 @@ Rate limits vary by plan. Contact [hello@confamnode.com](mailto:hello@confamnode
 
 - **Free tier** — shared capacity with lower limits
 - **Paid tier** — dedicated higher limits
-- **confam-nano** — limited capacity, queue-based
+- **Local models** (`confam-health`, `confam-local`) — deployed on dedicated Nigerian hardware (Jetson AGX Orin), with a shared concurrency cap across both models. Under heavy simultaneous load, requests queue briefly rather than failing outright.
 
 ---
 
@@ -254,6 +332,8 @@ ansa = client.gist(
 
 Caching must be enabled for your account for `cache=True` to take effect. A cache hit returns near-instantly — the quickest way to see it is to send the **same** request twice with `cache=True`: the first call populates the cache, the second is served from it.
 
+> **Note:** a cache hit still bills the full Naira cost of the request — you're paying for inference value, not raw compute. Caching saves time, not money.
+
 ---
 
 ## Reasoning Models
@@ -285,6 +365,18 @@ print(ansa.reasoning)   # full thinking trace
 print(ansa.text)        # final analysis
 ```
 
+### Controlling reasoning mode (`confam-local`)
+
+`confam-local` reasons in `<think>` blocks by default. To disable this per-request, pass `enable_thinking` nested under `chat_template_kwargs` via `extra_body` — this must be nested this way rather than passed as a top-level kwarg, or it will be silently ignored:
+
+```python
+result = client.gist(
+    model="confam-local",
+    messages="How you dey?",
+    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
+)
+```
+
 ---
 
 ## RAG (Retrieval-Augmented Generation)
@@ -297,6 +389,8 @@ print(ansa.text)        # final analysis
 | `confam-code` | Code search, documentation RAG | 1M tokens |
 | `confam-deep-reasoning` | Complex RAG, multi-hop reasoning | 1M tokens |
 
+`confam-embed-local` pairs well with any of the above for retrieval — see [Embeddings](#embeddings).
+
 ---
 
 ## Data Residency
@@ -305,7 +399,7 @@ Nigerian businesses handling sensitive data can use local models that run entire
 
 ```python
 ansa = client.gist(
-    model="confam-nano",
+    model="confam-local",
     messages="Analyse this sensitive document..."
 )
 
@@ -313,6 +407,8 @@ print(ansa.is_local)                 # True — runs on Nigerian hardware
 print(ansa.is_ngn_data_residency)    # True — data never leaves Nigeria
 print(ansa.text)
 ```
+
+For health information use cases, `confam-health` offers the same data-residency guarantee on a model tuned for that domain.
 
 **Ideal for:**
 - Nigerian banks and fintechs
@@ -356,6 +452,9 @@ from confamnode import (
     ConfamAuthError,
     ConfamRateLimitError,
     ConfamModelError,
+    ConfamInsufficientBalanceError,
+    ConfamProviderError,
+    ConfamRequestError,
     ConfamNodeError
 )
 
@@ -366,13 +465,21 @@ try:
     )
 except ConfamAuthError:
     print("Check your API key")
+except ConfamInsufficientBalanceError:
+    print("Wallet balance too low. Top up to continue.")
 except ConfamRateLimitError:
     print("You don reach your limit. Contact hello@confamnode.com")
 except ConfamModelError:
     print("Invalid model name")
+except ConfamProviderError:
+    print("The AI provider is temporarily unavailable. Try again shortly.")
+except ConfamRequestError:
+    print("Request could not be processed — check your parameters")
 except ConfamNodeError as e:
     print(f"Something went wrong: {e}")
 ```
+
+All specific exceptions above are subclasses of `ConfamNodeError` — catching that alone is enough if you don't need to distinguish error types.
 
 ---
 

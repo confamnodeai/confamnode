@@ -52,3 +52,22 @@ class StreamChunk:
     id: str = ""
     model: str = ""
     choices: list = field(default_factory=list)
+
+
+@dataclass
+class EmbeddingUsage:
+    prompt_tokens: int
+    total_tokens: int
+
+
+@dataclass
+class EmbeddingResult:
+    embeddings: list
+    model: str
+    usage: EmbeddingUsage
+    cost: Cost
+    raw: object
+    id: str = field(default_factory=lambda: f"confam-{uuid.uuid4()}")
+    is_local: bool = False
+    is_ngn_data_residency: bool = False
+    task_type_applied: str | None = None

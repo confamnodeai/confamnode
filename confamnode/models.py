@@ -19,7 +19,13 @@ TTS = "confam-tts"
 # =========================================================================
 # 🛠️ LOCAL PAID (NDPA Compliant)
 # =========================================================================
-NANO = "confam-nano"
+# NOTE: `confam-nano` was retired and replaced by two models, per the
+# July 2026 Jetson AGX Orin work — see confamnode-changelog.md. This SDK
+# copy of models.py was missed during that retirement (a separate file
+# from the API's own app/core/models.py, despite the shared name).
+HEALTH = "confam-health"
+LOCAL = "confam-local"
+# NANO = "confam-nano" # RETIRED - remove once confirmed no callers reference it
 
 # =========================================================================
 # 📦 FREE EMBEDDINGS
@@ -36,7 +42,7 @@ EMBED_MULTIMODAL_PRO = "confam-embed-multimodal-pro"
 EMBED_MULTILINGUAL = "confam-embed-multilingual"
 EMBED_SMALL = "confam-embed-small"
 EMBED_0_6B = "confam-embed-0.6b"
-EMBED_TEXT_LOCAL = "confam-embed-text-local"
+EMBED_LOCAL = "confam-embed-local"
 
 # =========================================================================
 # 🔍 RERANK
