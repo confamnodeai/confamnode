@@ -64,7 +64,7 @@ from confamnode import ConfamNode
 client = ConfamNode(api_key="confam-xxx")
 
 ansa = client.gist(
-    model="confam-speed",
+    model="gemini/gemini-3.5-flash-lite",
     messages="How you dey?"
 )
 
@@ -84,7 +84,7 @@ from confamnode import ConfamNode
 client = ConfamNode(api_key="confam-xxx")
 
 stream = client.gist(
-    model="confam-speed",
+    model="gemini/gemini-3.5-flash-lite",
     messages="Wetin be the capital of 9ja?",
     stream=True
 )
@@ -110,7 +110,7 @@ print(f"ID: {ansa.id}")
 Every `gist()` call returns an `Ansa` object:
 
 ```python
-ansa = client.gist(model="confam-speed", messages="How you dey?")
+ansa = client.gist(model="gemini/gemini-3.5-flash-lite", messages="How you dey?")
 
 # Response
 ansa.text               # response text
@@ -157,7 +157,7 @@ client = ConfamNode(api_key="confam-xxx")
 
 # Single string in → one flat vector out
 result = client.embed(
-    model="confam-embed-local",
+    model="liquid/lfm-2.5-embedding-350m:free",
     input="How you dey?"
 )
 
@@ -167,14 +167,12 @@ print(f"Tokens: {result.usage.total_tokens}")
 
 # List in → list of vectors out, always — even with one item
 result = client.embed(
-    model="confam-embed-local",
+    model="liquid/lfm-2.5-embedding-350m:free",
     input=["How you dey?", "Wetin dey happen?"]
 )
 
 print(len(result.embeddings))  # 2
 ```
-
-`confam-embed-local` is currently the only available embedding model. More coming soon.
 
 ### Task types
 
@@ -182,7 +180,7 @@ Some embedding models expect a task-type hint (e.g. `"query"` vs. `"document"`) 
 
 ```python
 result = client.embed(
-    model="confam-embed-local",
+    model="liquid/lfm-2.5-embedding-350m:free",
     input="find me a good jollof rice recipe",
     task_type="query"
 )
@@ -195,7 +193,7 @@ print(result.task_type_applied)  # confirms what actually happened for this call
 ### The EmbeddingResult Object
 
 ```python
-result = client.embed(model="confam-embed-local", input="How you dey?")
+result = client.embed(model="liquid/lfm-2.5-embedding-350m:free", input="How you dey?")
 
 result.embeddings            # vector(s) — shape matches your input shape
 result.model                 # model that served the request
@@ -210,46 +208,41 @@ result.id                    # unique request ID
 result.raw                   # full raw response
 ```
 
-### Batch limits (`confam-embed-local`)
-
-Self-hosted embedding requests to `confam-embed-local` are served in batches of up to 4 concurrent requests at a time. If you're embedding a large number of documents, being aware of this batching ceiling will give you a more predictable sense of total time than assuming unlimited concurrency.
-
 ---
 
 ## Models
 
-### Free Tier
+#### Free Tier
 
-| Model | Description | Modality | Price |
-|---|---|---|---|
-| `confam-speed` | Fast, high quality responses | Image-Text-to-Text | Free |
-| `confam-reasoning` | Standard reasoning and analysis | Text-to-Text | Free |
+| Model | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
+|---|---|---|---|---|---|
+| `gemini/gemini-3.1-flash-lite` | Text/Image/Video/File/Audio -> Text | ₦0 | ₦0| ₦0 | ₦0 |
+| `gemini/gemini-3.5-flash-lite` | Text/Image/Video/File/Audio -> Text |  ₦0 | ₦0| ₦0 | ₦0 |
+| `nvidia/nemotron-3-super-120b-a12b:free` | Text -> Text | ₦0 | ₦0| ₦0 | ₦0 |
+| `nvidia/nemotron-3-ultra-550b-a55b:free` | Text -> Text | ₦0 | ₦0| ₦0 | ₦0 |
 
-### Paid Tier
+#### Paid Tier
 
-| Model | Description | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
-|---|---|---|---|---|---|---|
-| `confam-intelligence` | General smart tasks, 1M context | Image-Text-to-Text | ₦596 | ₦3,571 | ₦0.596 | ₦3.571 |
-| `confam-deep-reasoning` | Complex thinking, multi-step analysis | Image-Text-to-Text | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
-| `confam-code` | Coding assistance, 1M context | Image-Text-to-Text | ₦234 | ₦468 | ₦0.234 | ₦0.468 |
-
-### Local Models — Nigerian Data Residency
-
-| Model | Description | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
-|---|---|---|---|---|---|---|
-| `confam-health` | Local model, health information use cases — data stays in Nigeria | Image-Text-to-Text | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
-| `confam-local` | Local model, general-purpose — data stays in Nigeria | Text-to-Text | ₦500 | ₦1,500 | ₦0.500 | ₦1.500 |
+| Model | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
+|---|---|---|---|---|---|
+| `deepseek/deepseek-v4.1-flash` | Text/Image -> Text | ₦704 | ₦2,813 | ₦0.704 | ₦2.813 |
 
 ### Embeddings
 
-| Model | Description | Where it runs |
-|---|---|---|
-| `confam-embed-local` | Self-hosted text embeddings — data stays in Nigeria | Local |
+#### Free Tier
+
+| Model | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
+|---|---|---|---|---|---|
+| `liquid/lfm-2.5-embedding-350m:free` | Text -> Embeddings | ₦0 | ₦0 | ₦0 | ₦0 |
+
+#### Paid Tier
+
+| Model | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
+|---|---|---|---|---|---|
+| `google/gemini-embedding-001` | Text -> Embeddings | ₦352 | ₦0 | ₦0.352 | ₦0 |
+| `google/gemini-embedding-2` | Text/Image/File/Audio/Video -> Text | ₦469 | ₦0 | ₦0.469 | ₦0 |
 
 More embedding models coming soon.
-
-Local models run entirely on Nigerian hardware. Data never transmitted abroad.
-Ideal for banks, fintechs, hospitals, law firms, and government agencies.
 
 More models coming soon. Contact [hello@confamnode.com](mailto:hello@confamnode.com) for early access.
 
@@ -275,7 +268,6 @@ Rate limits vary by plan. Contact [hello@confamnode.com](mailto:hello@confamnode
 
 - **Free tier** — shared capacity with lower limits
 - **Paid tier** — dedicated higher limits
-- **Local models** (`confam-health`, `confam-local`) — deployed on dedicated Nigerian hardware (Jetson AGX Orin), with a shared concurrency cap across both models. Under heavy simultaneous load, requests queue briefly rather than failing outright.
 
 ---
 
@@ -286,21 +278,21 @@ ConfamNode adds a default system message to every request giving the model a Nig
 ```python
 # Use ConfamNode default identity (default)
 ansa = client.gist(
-    model="confam-speed",
+    model="gemini/gemini-3.5-flash-lite",
     messages="Who are you?"
 )
 # "I am ConfamNode, Nigeria's AI inference gateway..."
 
 # Override with your own system message
 ansa = client.gist(
-    model="confam-speed",
+    model="gemini/gemini-3.5-flash-lite",
     messages="Who are you?",
     system="You are a helpful customer service agent for Konga."
 )
 
 # Disable system message entirely
 ansa = client.gist(
-    model="confam-speed",
+    model="gemini/gemini-3.5-flash-lite",
     messages="Who you be?",
     system=None
 )
@@ -317,14 +309,14 @@ Pass `cache=True` to let the gateway serve and store a cached response — usefu
 ```python
 # Default — caching off, fresh response every call
 ansa = client.gist(
-    model="confam-speed",
+    model="deepseek/deepseek-v4.1-flash",
     messages="How you dey?"
 )
 
 # Enable caching — the gateway may return a stored response for a
 # matching request, and store this one for next time
 ansa = client.gist(
-    model="confam-speed",
+    model="deepseek/deepseek-v4.1-flash",
     messages="How you dey?",
     cache=True
 )
@@ -338,25 +330,31 @@ Caching must be enabled for your account for `cache=True` to take effect. A cach
 
 ## Reasoning Models
 
+- nvidia/nemotron-3-super-120b-a12b:free
+- nvidia/nemotron-3-ultra-550b-a55b:free
+- gemini/gemini-3.1-flash-lite
+- gemini/gemini-3.5-flash-lite
+- deepseek/deepseek-v4.1-flash
+
 Enable extended thinking for complex problems:
 
 ```python
 ansa = client.gist(
-    model="confam-reasoning",
+    model="nvidia/nemotron-3-ultra-550b-a55b:free",
     messages="One trader buy goods for ₦50,000 sell am for ₦75,000. After e pay ₦5,000 for transport and ₦3,000 for market, wetin be the real profit? Show how you calculate am.",
     reasoning_effort="low"
-    # one of: "xhigh", "high", "medium", "low", "minimal", "none"
+    # one of: "high", "medium", "low", "minimal", "none"
 )
 
 print(ansa.reasoning)   # thinking trace
 print(ansa.text)        # final answer
 ```
 
-Also available on `confam-deep-reasoning` for more complex multi-step problems:
+Also available on reasoning models for more complex multi-step problems:
 
 ```python
 ansa = client.gist(
-    model="confam-deep-reasoning",
+    model="nvidia/nemotron-3-ultra-550b-a55b:free",
     messages="Analyse the financial risk of a Nigerian fintech expanding to Ghana...",
     reasoning_effort="high"
 )
@@ -365,57 +363,49 @@ print(ansa.reasoning)   # full thinking trace
 print(ansa.text)        # final analysis
 ```
 
-### Controlling reasoning mode (`confam-local`)
-
-`confam-local` reasons in `<think>` blocks by default. To disable this per-request, pass `enable_thinking` nested under `chat_template_kwargs` via `extra_body` — this must be nested this way rather than passed as a top-level kwarg, or it will be silently ignored:
-
-```python
-result = client.gist(
-    model="confam-local",
-    messages="How you dey?",
-    extra_body={"chat_template_kwargs": {"enable_thinking": False}}
-)
-```
-
 ---
 
-## RAG (Retrieval-Augmented Generation)
-
-### Best models for RAG
-
-| Model | Why | Context |
-|---|---|---|
-| `confam-intelligence` | General RAG, reliable, long context | 1M tokens |
-| `confam-code` | Code search, documentation RAG | 1M tokens |
-| `confam-deep-reasoning` | Complex RAG, multi-hop reasoning | 1M tokens |
-
-`confam-embed-local` pairs well with any of the above for retrieval — see [Embeddings](#embeddings).
-
----
-
-## Data Residency
-
-Nigerian businesses handling sensitive data can use local models that run entirely on Nigerian hardware — data is never transmitted abroad:
+## Working with Images
 
 ```python
+def encode_image_b64(image_path: Path) -> tuple[str, str]:
+    """Returns (base64_data, mime_type)."""
+    mime = "image/jpeg"
+    suffix = image_path.suffix.lower()
+    if suffix == ".png":
+        mime = "image/png"
+    elif suffix == ".webp":
+        mime = "image/webp"
+    elif suffix in (".jpg", ".jpeg"):
+        mime = "image/jpeg"
+    data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    return data, mime
+
+image_path = Path("<image_path>")
+img_b64, mime = encode_image_b64(image_path)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Describe this image"},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:{mime};base64,{img_b64}"}
+            }
+        ],
+    },
+]
+
 ansa = client.gist(
-    model="confam-local",
-    messages="Analyse this sensitive document..."
+    model="gemini/gemini-3.5-flash-lite",
+    messages=messages
 )
 
-print(ansa.is_local)                 # True — runs on Nigerian hardware
-print(ansa.is_ngn_data_residency)    # True — data never leaves Nigeria
+if ansa.reasoning:
+    print(f"***Reasoning Start***\n{ansa.reasoning}\n***Reasoning End***")
 print(ansa.text)
 ```
-
-For health information use cases, `confam-health` offers the same data-residency guarantee on a model tuned for that domain.
-
-**Ideal for:**
-- Nigerian banks and fintechs
-- Healthcare companies
-- Law firms
-- Government agencies
-- Any business with strict data residency requirements
 
 ---
 
@@ -460,7 +450,7 @@ from confamnode import (
 
 try:
     ansa = client.gist(
-        model="confam-speed",
+        model="gemini/gemini-3.5-flash-lite",
         messages="How you dey?"
     )
 except ConfamAuthError:
@@ -480,6 +470,204 @@ except ConfamNodeError as e:
 ```
 
 All specific exceptions above are subclasses of `ConfamNodeError` — catching that alone is enough if you don't need to distinguish error types.
+
+---
+
+## REST API
+
+ConfamNode provides an OpenAI-compatible REST API that you can call from any programming language or HTTP client without installing the Python SDK.
+
+**Base URL:** `https://api.confamnode.com/v1`
+
+### Authentication
+
+Set your API key as an environment variable:
+
+```bash
+export CONFAMNODE_API_KEY="confam-xxx"
+```
+
+All requests require Bearer-token authentication and a JSON content type.
+
+---
+
+### 1. Chat Completions
+
+**Endpoint:** `POST /v1/chat/completions`
+
+#### cURL
+
+```bash
+curl -X POST https://api.confamnode.com/v1/chat/completions \
+  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemini/gemini-3.5-flash-lite",
+    "messages": [
+      {
+        "role": "user",
+        "content": "How you dey?"
+      }
+    ]
+  }'
+```
+
+#### Python
+
+Requires `requests`:
+
+```bash
+pip install requests
+```
+
+```python
+import os
+import requests
+
+response = requests.post(
+    "https://api.confamnode.com/v1/chat/completions",
+    headers={
+        "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "gemini/gemini-3.5-flash-lite",
+        "messages": [
+            {"role": "user", "content": "How you dey?"}
+        ],
+    },
+)
+
+response.raise_for_status()
+ansa = response.json()
+
+print(ansa["choices"][0]["message"]["content"])
+```
+
+#### JavaScript
+
+Works with modern browsers and Node.js environments that support `fetch`. In Node.js, set `CONFAMNODE_API_KEY` in your environment.
+
+```javascript
+const response = await fetch(
+  "https://api.confamnode.com/v1/chat/completions",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.CONFAMNODE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gemini/gemini-3.5-flash-lite",
+      messages: [
+        { role: "user", content: "How you dey?" },
+      ],
+    }),
+  }
+);
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+}
+
+const ansa = await response.json();
+console.log(ansa.choices[0].message.content);
+```
+
+---
+
+### 2. Embeddings
+
+Generate vector embeddings for semantic search, RAG pipelines, and other machine-learning applications.
+
+**Endpoint:** `POST /v1/embeddings`
+
+#### cURL
+
+```bash
+curl -X POST https://api.confamnode.com/v1/embeddings \
+  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "liquid/lfm-2.5-embedding-350m:free",
+    "input": "How you dey?"
+  }'
+```
+
+You can also submit multiple texts in a single request:
+
+```bash
+curl -X POST https://api.confamnode.com/v1/embeddings \
+  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "liquid/lfm-2.5-embedding-350m:free",
+    "input": [
+      "How you dey?",
+      "Wetin dey happen?"
+    ]
+  }'
+```
+
+#### Python
+
+```python
+import os
+import requests
+
+response = requests.post(
+    "https://api.confamnode.com/v1/embeddings",
+    headers={
+        "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "liquid/lfm-2.5-embedding-350m:free",
+        "input": "How you dey?",
+    },
+)
+
+response.raise_for_status()
+result = response.json()
+
+print(result)
+```
+
+#### JavaScript
+
+```javascript
+const response = await fetch(
+  "https://api.confamnode.com/v1/embeddings",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.CONFAMNODE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "liquid/lfm-2.5-embedding-350m:free",
+      input: "How you dey?",
+    }),
+  }
+);
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+}
+
+const result = await response.json();
+console.log(result);
+```
+
+---
+
+### Notes
+
+- **Authentication:** Include your API key in the `Authorization: Bearer` header for every request.
+- **Content type:** Send JSON requests using `Content-Type: application/json`.
+- **API key security:** Never expose your API key in public repositories or browser-side code. For frontend applications, make API requests through your backend.
+- **No SDK required:** These examples work directly with the ConfamNode REST API.
+- **Pricing:** All applicable API charges are calculated in Nigerian Naira (₦).
 
 ---
 
