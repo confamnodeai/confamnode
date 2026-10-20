@@ -473,6 +473,204 @@ All specific exceptions above are subclasses of `ConfamNodeError` — catching t
 
 ---
 
+## REST API — Any Programming Language
+
+ConfamNode provides an OpenAI-compatible REST API that you can call from any programming language or HTTP client without installing the Python SDK.
+
+**Base URL:** `https://api.confamnode.com/v1`
+
+### Authentication
+
+Set your API key as an environment variable:
+
+```bash
+export CONFAMNODE_API_KEY="confam-xxx"
+```
+
+All requests require Bearer-token authentication and a JSON content type.
+
+---
+
+### 1. Chat Completions
+
+**Endpoint:** `POST /v1/chat/completions`
+
+#### cURL
+
+```bash
+curl -X POST https://api.confamnode.com/v1/chat/completions \
+  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemini/gemini-3.5-flash-lite",
+    "messages": [
+      {
+        "role": "user",
+        "content": "How you dey?"
+      }
+    ]
+  }'
+```
+
+#### Python
+
+Requires `requests`:
+
+```bash
+pip install requests
+```
+
+```python
+import os
+import requests
+
+response = requests.post(
+    "https://api.confamnode.com/v1/chat/completions",
+    headers={
+        "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "gemini/gemini-3.5-flash-lite",
+        "messages": [
+            {"role": "user", "content": "How you dey?"}
+        ],
+    },
+)
+
+response.raise_for_status()
+ansa = response.json()
+
+print(ansa["choices"][0]["message"]["content"])
+```
+
+#### JavaScript
+
+Works with modern browsers and Node.js environments that support `fetch`. In Node.js, set `CONFAMNODE_API_KEY` in your environment.
+
+```javascript
+const response = await fetch(
+  "https://api.confamnode.com/v1/chat/completions",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.CONFAMNODE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gemini/gemini-3.5-flash-lite",
+      messages: [
+        { role: "user", content: "How you dey?" },
+      ],
+    }),
+  }
+);
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+}
+
+const ansa = await response.json();
+console.log(ansa.choices[0].message.content);
+```
+
+---
+
+### 2. Embeddings
+
+Generate vector embeddings for semantic search, RAG pipelines, and other machine-learning applications.
+
+**Endpoint:** `POST /v1/embeddings`
+
+#### cURL
+
+```bash
+curl -X POST https://api.confamnode.com/v1/embeddings \
+  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "liquid/lfm-2.5-embedding-350m:free",
+    "input": "How you dey?"
+  }'
+```
+
+You can also submit multiple texts in a single request:
+
+```bash
+curl -X POST https://api.confamnode.com/v1/embeddings \
+  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "liquid/lfm-2.5-embedding-350m:free",
+    "input": [
+      "How you dey?",
+      "Wetin dey happen?"
+    ]
+  }'
+```
+
+#### Python
+
+```python
+import os
+import requests
+
+response = requests.post(
+    "https://api.confamnode.com/v1/embeddings",
+    headers={
+        "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "liquid/lfm-2.5-embedding-350m:free",
+        "input": "How you dey?",
+    },
+)
+
+response.raise_for_status()
+result = response.json()
+
+print(result)
+```
+
+#### JavaScript
+
+```javascript
+const response = await fetch(
+  "https://api.confamnode.com/v1/embeddings",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.CONFAMNODE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "liquid/lfm-2.5-embedding-350m:free",
+      input: "How you dey?",
+    }),
+  }
+);
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+}
+
+const result = await response.json();
+console.log(result);
+```
+
+---
+
+### Notes
+
+- **Authentication:** Include your API key in the `Authorization: Bearer` header for every request.
+- **Content type:** Send JSON requests using `Content-Type: application/json`.
+- **API key security:** Never expose your API key in public repositories or browser-side code. For frontend applications, make API requests through your backend.
+- **No SDK required:** These examples work directly with the ConfamNode REST API.
+- **Pricing:** All applicable API charges are calculated in Nigerian Naira (₦).
+
+---
+
 ## Private AI Deployment
 
 Need data-residential private AI on your own infrastructure?
