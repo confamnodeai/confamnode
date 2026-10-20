@@ -473,7 +473,7 @@ All specific exceptions above are subclasses of `ConfamNodeError` — catching t
 
 ---
 
-## REST API — Any Programming Language
+## REST API
 
 ConfamNode provides an OpenAI-compatible REST API that you can call from any programming language or HTTP client without installing the Python SDK.
 
