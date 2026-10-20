@@ -4,35 +4,23 @@ from confamnode import models
 # Cloud Models — inference via external providers
 # =========================================================================
 CLOUD_MODELS = {
-    # Free chat
-    models.LITE,
-    models.SPEED,
-    models.REASONING,
+    # ------------------------------------------------------------------- FREE -------------------------------------------------------------------
 
-    # Paid chat
-    models.INTELLIGENCE,
-    models.DEEP_REASONING,
-    models.CODE,
-    models.CODE_PRO,
-    models.VISION,
-    models.AUDIO,
-    models.TTS,
+    # Text/Image/Video/File/Audio -> Text
+    "gemini/gemini-3.1-flash-lite", 
+    "gemini/gemini-3.5-flash-lite",
 
-    # Free embeddings
-    models.EMBED_TEXT,
-    models.EMBED_MULTIMODAL,
-    models.EMBED_MULTIMODAL_2,
+    # Text -> Text
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
 
-    # Paid embeddings
-    models.EMBED_TEXT_PRO,
-    models.EMBED_MULTIMODAL_PRO,
-    models.EMBED_MULTILINGUAL,
-    models.EMBED_SMALL,
-    models.EMBED_0_6B,
+    # Text -> Embeddings
+    "liquid/lfm-2.5-embedding-350m:free",
 
-    # Rerank
-    models.RERANK,
-    models.RERANK_FAST,
+    # ------------------------------------------------------------------- PAID -------------------------------------------------------------------
+
+    # Text/Image -> Text
+    "deepseek/deepseek-v4.1-flash",
 }
 
 # =========================================================================
@@ -52,4 +40,4 @@ NGN_DATA_RESIDENCY_MODELS = LOCAL_MODELS  # same as local for now
 # =========================================================================
 # All Valid Models
 # =========================================================================
-VALID_MODELS = CLOUD_MODELS | LOCAL_MODELS
+VALID_MODELS = CLOUD_MODELS # | LOCAL_MODELS
