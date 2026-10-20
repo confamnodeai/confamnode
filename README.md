@@ -475,7 +475,7 @@ All specific exceptions above are subclasses of `ConfamNodeError` — catching t
 
 ## REST API
 
-ConfamNode provides an OpenAI-compatible REST API that you can call from any programming language or HTTP client without installing the Python SDK.
+ConfamNode provides an OpenAI-compatible REST API that you can call from any programming language or HTTP client without installing the ConfamNode SDK.
 
 **Base URL:** `https://api.confamnode.com/v1`
 
@@ -493,7 +493,7 @@ All requests require Bearer-token authentication and a JSON content type.
 
 ### 1. Chat Completions
 
-**Endpoint:** `POST /v1/chat/completions`
+**Endpoint:** `POST https://api.confamnode.com/v1/chat/completions`
 
 #### cURL
 
@@ -512,19 +512,19 @@ curl -X POST https://api.confamnode.com/v1/chat/completions \
   }'
 ```
 
-#### Python
+#### Python — HTTPX (Synchronous)
 
-Requires `requests`:
+Install HTTPX:
 
 ```bash
-pip install requests
+pip install httpx
 ```
 
 ```python
 import os
-import requests
+import httpx
 
-response = requests.post(
+response = httpx.post(
     "https://api.confamnode.com/v1/chat/completions",
     headers={
         "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
@@ -536,6 +536,7 @@ response = requests.post(
             {"role": "user", "content": "How you dey?"}
         ],
     },
+    timeout=60.0,
 )
 
 response.raise_for_status()
@@ -544,9 +545,44 @@ ansa = response.json()
 print(ansa["choices"][0]["message"]["content"])
 ```
 
-#### JavaScript
+#### Python — HTTPX (Asynchronous)
 
-Works with modern browsers and Node.js environments that support `fetch`. In Node.js, set `CONFAMNODE_API_KEY` in your environment.
+Use `httpx.AsyncClient` when working with async applications, such as FastAPI services or asynchronous workers.
+
+```python
+import os
+import asyncio
+import httpx
+
+async def main():
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://api.confamnode.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "gemini/gemini-3.5-flash-lite",
+                "messages": [
+                    {"role": "user", "content": "How you dey?"}
+                ],
+            },
+        )
+
+        response.raise_for_status()
+        ansa = response.json()
+
+        print(ansa["choices"][0]["message"]["content"])
+
+asyncio.run(main())
+```
+
+**Note:** In an existing async application, use `await main()` or await the request from your existing async function instead of calling `asyncio.run()`.
+
+#### JavaScript — Fetch API
+
+Works in modern browsers and Node.js environments that support `fetch`. This example uses Node.js environment variables.
 
 ```javascript
 const response = await fetch(
@@ -567,7 +603,9 @@ const response = await fetch(
 );
 
 if (!response.ok) {
-  throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  throw new Error(
+    `HTTP ${response.status}: ${await response.text()}`
+  );
 }
 
 const ansa = await response.json();
@@ -578,9 +616,9 @@ console.log(ansa.choices[0].message.content);
 
 ### 2. Embeddings
 
-Generate vector embeddings for semantic search, RAG pipelines, and other machine-learning applications.
+Generate vector embeddings for semantic search, retrieval-augmented generation (RAG), and other machine-learning applications.
 
-**Endpoint:** `POST /v1/embeddings`
+**Endpoint:** `POST https://api.confamnode.com/v1/embeddings`
 
 #### cURL
 
@@ -594,28 +632,13 @@ curl -X POST https://api.confamnode.com/v1/embeddings \
   }'
 ```
 
-You can also submit multiple texts in a single request:
-
-```bash
-curl -X POST https://api.confamnode.com/v1/embeddings \
-  -H "Authorization: Bearer $CONFAMNODE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "liquid/lfm-2.5-embedding-350m:free",
-    "input": [
-      "How you dey?",
-      "Wetin dey happen?"
-    ]
-  }'
-```
-
-#### Python
+#### Python — HTTPX (Synchronous)
 
 ```python
 import os
-import requests
+import httpx
 
-response = requests.post(
+response = httpx.post(
     "https://api.confamnode.com/v1/embeddings",
     headers={
         "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
@@ -625,6 +648,7 @@ response = requests.post(
         "model": "liquid/lfm-2.5-embedding-350m:free",
         "input": "How you dey?",
     },
+    timeout=60.0,
 )
 
 response.raise_for_status()
@@ -633,7 +657,36 @@ result = response.json()
 print(result)
 ```
 
-#### JavaScript
+#### Python — HTTPX (Asynchronous)
+
+```python
+import os
+import asyncio
+import httpx
+
+async def main():
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            "https://api.confamnode.com/v1/embeddings",
+            headers={
+                "Authorization": f"Bearer {os.environ['CONFAMNODE_API_KEY']}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "liquid/lfm-2.5-embedding-350m:free",
+                "input": "How you dey?",
+            },
+        )
+
+        response.raise_for_status()
+        result = response.json()
+
+        print(result)
+
+asyncio.run(main())
+```
+
+#### JavaScript — Fetch API
 
 ```javascript
 const response = await fetch(
@@ -652,7 +705,9 @@ const response = await fetch(
 );
 
 if (!response.ok) {
-  throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  throw new Error(
+    `HTTP ${response.status}: ${await response.text()}`
+  );
 }
 
 const result = await response.json();
@@ -665,9 +720,10 @@ console.log(result);
 
 - **Authentication:** Include your API key in the `Authorization: Bearer` header for every request.
 - **Content type:** Send JSON requests using `Content-Type: application/json`.
-- **API key security:** Never expose your API key in public repositories or browser-side code. For frontend applications, make API requests through your backend.
-- **No SDK required:** These examples work directly with the ConfamNode REST API.
-- **Pricing:** All applicable API charges are calculated in Nigerian Naira (₦).
+- **Synchronous vs. asynchronous:** Use `httpx.post()` for synchronous code and `httpx.AsyncClient` with `await` for asynchronous code.
+- **API key security:** Never expose your API key in public repositories or browser-side code. For frontend applications, make authenticated requests through your backend.
+- **No SDK required:** These examples call the REST API directly.
+- **Pricing:** Applicable API charges are calculated in Nigerian Naira (₦).
 
 ---
 
