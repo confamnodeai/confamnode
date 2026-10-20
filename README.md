@@ -240,7 +240,7 @@ result.raw                   # full raw response
 | Model | Modality | Input ₦/1M | Output ₦/1M | Input ₦/1K | Output ₦/1K |
 |---|---|---|---|---|---|
 | `google/gemini-embedding-001` | Text -> Embeddings | ₦352 | ₦0 | ₦0.352 | ₦0 |
-| `google/gemini-embedding-2` | Text/Image/File/Audio/Video -> Text | ₦469 | ₦0 | ₦0.469 | ₦0 |
+| `google/gemini-embedding-2` | Text/Image/File/Audio/Video -> Embeddings | ₦469 | ₦0 | ₦0.469 | ₦0 |
 
 More embedding models coming soon.
 
