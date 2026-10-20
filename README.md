@@ -332,6 +332,8 @@ Caching must be enabled for your account for `cache=True` to take effect. A cach
 
 - nvidia/nemotron-3-super-120b-a12b:free
 - nvidia/nemotron-3-ultra-550b-a55b:free
+- gemini/gemini-3.1-flash-lite
+- gemini/gemini-3.5-flash-lite
 - deepseek/deepseek-v4.1-flash
 
 Enable extended thinking for complex problems:
@@ -341,7 +343,7 @@ ansa = client.gist(
     model="nvidia/nemotron-3-ultra-550b-a55b:free",
     messages="One trader buy goods for ₦50,000 sell am for ₦75,000. After e pay ₦5,000 for transport and ₦3,000 for market, wetin be the real profit? Show how you calculate am.",
     reasoning_effort="low"
-    # one of: "xhigh", "high", "medium", "low", "minimal", "none"
+    # one of: "high", "medium", "low", "minimal", "none"
 )
 
 print(ansa.reasoning)   # thinking trace
@@ -361,6 +363,49 @@ print(ansa.reasoning)   # full thinking trace
 print(ansa.text)        # final analysis
 ```
 
+---
+
+## Working with Images
+
+```python
+def encode_image_b64(image_path: Path) -> tuple[str, str]:
+    """Returns (base64_data, mime_type)."""
+    mime = "image/jpeg"
+    suffix = image_path.suffix.lower()
+    if suffix == ".png":
+        mime = "image/png"
+    elif suffix == ".webp":
+        mime = "image/webp"
+    elif suffix in (".jpg", ".jpeg"):
+        mime = "image/jpeg"
+    data = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    return data, mime
+
+image_path = Path("<image_path>")
+img_b64, mime = encode_image_b64(image_path)
+
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "text", "text": "Describe this image"},
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:{mime};base64,{img_b64}"}
+            }
+        ],
+    },
+]
+
+ansa = client.gist(
+    model="gemini/gemini-3.1-flash-lite",
+    messages=messages
+)
+
+if ansa.reasoning:
+    print(f"***Reasoning Start***\n{ansa.reasoning}\n***Reasoning End***")
+print(ansa.text)
+```
 ---
 
 ## Environment Variable
