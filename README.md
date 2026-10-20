@@ -361,6 +361,8 @@ print(ansa.reasoning)   # full thinking trace
 print(ansa.text)        # final analysis
 ```
 
+---
+
 ## Environment Variable
 
 ```bash
