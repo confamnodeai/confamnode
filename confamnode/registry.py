@@ -21,6 +21,12 @@ CLOUD_MODELS = {
 
     # Text/Image -> Text
     "deepseek/deepseek-v4.1-flash",
+
+    # Text -> Embeddings
+    "google/gemini-embedding-001",
+
+    # Text/Image/File/Audio/Video -> Text
+    "google/gemini-embedding-2",
 }
 
 # =========================================================================

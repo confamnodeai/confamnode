@@ -63,7 +63,7 @@ def test_client_sends_confam_key_in_authorization_header():
         "id": "confam-xxx",
         "object": "chat.completion",
         "created": 1,
-        "model": "confam-speed",
+        "model": "gemini/gemini-3.5-flash-lite",
         "choices": [{"index": 0, "finish_reason": "stop",
                      "message": {"role": "assistant", "content": "hi",
                                  "reasoning": None, "tool_calls": None, "citations": None}}],
@@ -75,6 +75,6 @@ def test_client_sends_confam_key_in_authorization_header():
 
     client = ConfamNode(api_key="confam-abc123")
     with patch("confamnode.client.httpx.post", return_value=mock_response) as mock_post:
-        client.gist(model="confam-speed", messages="hi")
+        client.gist(model="gemini/gemini-3.5-flash-lite", messages="hi")
         call_headers = mock_post.call_args.kwargs["headers"]
         assert call_headers["Authorization"] == "Bearer confam-abc123"

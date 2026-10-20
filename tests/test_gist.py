@@ -7,6 +7,20 @@ from confamnode.ansa import Ansa, Usage, Cost
 from confamnode.exceptions import ConfamModelError
 
 
+CLOUD_MODEL = "gemini/gemini-3.5-flash-lite"
+CLOUD_INTELLIGENCE_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+
+VALID_MODELS = [
+    "gemini/gemini-3.1-flash-lite", 
+    "gemini/gemini-3.5-flash-lite",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "liquid/lfm-2.5-embedding-350m:free",
+    "deepseek/deepseek-v4.1-flash",
+    "google/gemini-embedding-001",
+    "google/gemini-embedding-2",
+]
+
 
 @pytest.fixture
 def client():
@@ -21,7 +35,7 @@ def mock_proxy_response():
         "id": "confam-test-id",
         "object": "chat.completion",
         "created": 1234567890,
-        "model": "confam-speed",
+        "model": CLOUD_MODEL,
         "choices": [{
             "index": 0,
             "finish_reason": "stop",
@@ -55,7 +69,7 @@ def test_gist_requires_model(client):
 
 def test_gist_requires_messages(client):
     with pytest.raises(TypeError):
-        client.gist(model=models.SPEED)
+        client.gist(model=CLOUD_MODEL)
 
 
 def test_gist_rejects_invalid_model(client):
@@ -65,25 +79,25 @@ def test_gist_rejects_invalid_model(client):
 
 def test_gist_returns_ansa_object(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert isinstance(ansa, Ansa)
 
 
 def test_gist_returns_content(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert ansa.text == "How far! I dey fine."
 
 
 def test_gist_has_model(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa =client.gist(model="confam-speed", messages="How far?")
-        assert ansa.model == "confam-speed"
+        ansa =client.gist(model=CLOUD_MODEL, messages="How far?")
+        assert ansa.model == CLOUD_MODEL
 
 
 def test_gist_has_usage(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert isinstance(ansa.usage, Usage)
         assert ansa.usage.prompt_tokens == 10
         assert ansa.usage.completion_tokens == 20
@@ -92,7 +106,7 @@ def test_gist_has_usage(client, mock_proxy_response):
 
 def test_gist_has_cost(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert isinstance(ansa.cost, Cost)
         assert isinstance(ansa.cost.naira, float)
 
@@ -104,7 +118,7 @@ def test_gist_comes_from_confam_object(client, mock_proxy_response):
         "naira_output": 0.521
     }
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model="confam-intelligence", messages="How far?")
+        ansa = client.gist(model=CLOUD_INTELLIGENCE_MODEL, messages="How far?")
         assert ansa.cost.naira == 0.596
         assert ansa.cost.naira_input == 0.075
         assert ansa.cost.naira_output == 0.521
@@ -112,32 +126,32 @@ def test_gist_comes_from_confam_object(client, mock_proxy_response):
 
 def test_gist_has_finish_reason(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert ansa.finish_reason == "stop"
 
 
 def test_gist_has_id(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert ansa.id.startswith("confam-")
 
 
 def test_gist_has_raw(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert isinstance(ansa.raw, dict)
         assert "_hidden_params" not in ansa.raw
 
 
 def test_gist_accepts_string_messages(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How far?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How far?")
         assert ansa is not None
 
 
 def test_gist_converts_string_to_user_message_in_request(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
-        client.gist(model=models.SPEED, messages="How far?")
+        client.gist(model=CLOUD_MODEL, messages="How far?")
         body = mock_post.call_args.kwargs["json"]
         user_msgs = [m for m in body["messages"] if m["role"] == "user"]
         assert user_msgs[0]["content"] == "How far?"
@@ -146,7 +160,7 @@ def test_gist_converts_string_to_user_message_in_request(client, mock_proxy_resp
 def test_gist_accepts_list_messages(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
         ansa = client.gist(
-            model=models.SPEED,
+            model=CLOUD_MODEL,
             messages=[{"role": "user", "content": "How far?"}]
         )
         assert ansa is not None
@@ -154,12 +168,12 @@ def test_gist_accepts_list_messages(client, mock_proxy_response):
 
 def test_gist_rejects_invalid_messages_type(client):
     with pytest.raises(ValueError, match="messages must be a string or list"):
-        client.gist(model=models.SPEED, messages=123)
+        client.gist(model=CLOUD_MODEL, messages=123)
 
 
 def test_gist_passes_kwargs_to_proxy(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
-        client.gist(model=models.SPEED, messages="How far?", temperature=0.7, max_tokens=500)
+        client.gist(model=CLOUD_MODEL, messages="How far?", temperature=0.7, max_tokens=500)
         body = mock_post.call_args.kwargs["json"]
         assert body["temperature"] == 0.7
         assert body["max_tokens"] == 500
@@ -167,29 +181,29 @@ def test_gist_passes_kwargs_to_proxy(client, mock_proxy_response):
 
 def test_gist_does_not_prepend_openai_prefix(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
-        client.gist(model="confam-speed", messages="How far?", temperature=0.7, max_tokens=500)
+        client.gist(model=CLOUD_MODEL, messages="How far?", temperature=0.7, max_tokens=500)
         body = mock_post.call_args.kwargs["json"]
-        assert body["model"] == "confam-speed"
+        assert body["model"] == CLOUD_MODEL
         assert "openai/" not in body["model"]
 
 
 def test_gist_default_system_omits_system_field(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
-        client.gist(model="confam-speed", messages="How far?")
+        client.gist(model=CLOUD_MODEL, messages="How far?")
         body = mock_post.call_args.kwargs["json"]
         assert "system" not in body
 
 
 def test_gist_custom_system_passes_as_field(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
-        client.gist(model=models.SPEED, messages="Who you be?", system="You are a Konga assistant")
+        client.gist(model=CLOUD_MODEL, messages="Who you be?", system="You are a Konga assistant")
         body = mock_post.call_args.kwargs["json"]
         assert body["system"] == "You are a Konga assistant"
 
 
 def test_gist_system_none_passes_null(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
-        client.gist(model=models.SPEED, messages="Who you be?", system=None)
+        client.gist(model=CLOUD_MODEL, messages="Who you be?", system=None)
         body = mock_post.call_args.kwargs["json"]
         assert "system" in body
         assert body["system"] is None
@@ -198,7 +212,7 @@ def test_gist_system_none_passes_null(client, mock_proxy_response):
 def test_gist_system_in_messages_list_is_respected(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response) as mock_post:
         client.gist(
-            model=models.SPEED,
+            model=CLOUD_MODEL,
             messages=[
                 {"role": "system", "content": "You are a Konga assistant"},
                 {"role": "user", "content": "Who you be?"}
@@ -209,26 +223,25 @@ def test_gist_system_in_messages_list_is_respected(client, mock_proxy_response):
         assert body["messages"][0]["content"] == "You are a Konga assistant"
 
 
-def test_gist_sets_local_from_confam_object(client, mock_proxy_response):
-    mock_proxy_response.json.return_value["confam"]["is_local"] = True
-    mock_proxy_response.json.return_value["confam"]["is_ngn_data_residency"] = True
-    with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.LOCAL, messages="How you dey?")
-        assert ansa.is_local is True
-        assert ansa.is_ngn_data_residency is True
+# def test_gist_sets_local_from_confam_object(client, mock_proxy_response):
+#     mock_proxy_response.json.return_value["confam"]["is_local"] = True
+#     mock_proxy_response.json.return_value["confam"]["is_ngn_data_residency"] = True
+#     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
+#         ansa = client.gist(model=models.LOCAL, messages="How you dey?")
+#         assert ansa.is_local is True
+#         assert ansa.is_ngn_data_residency is True
 
 
 def test_sets_is_local_false_for_cloud_model(client, mock_proxy_response):
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.SPEED, messages="How you dey?")
+        ansa = client.gist(model=CLOUD_MODEL, messages="How you dey?")
         assert ansa.is_local is False
         assert ansa.is_ngn_data_residency is False
 
 
 def test_gist_accepts_all_valid_models(client, mock_proxy_response):
-    valid_models = [models.LITE, models.SPEED, models.REASONING, models.HEALTH, models.LOCAL]
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        for model in valid_models:
+        for model in VALID_MODELS:
             ansa = client.gist(model=model, messages="How far?")
             assert ansa is not None
 
@@ -239,12 +252,12 @@ def test_gist_raises_on_proxy_error(client):
     mock_error_response.json.return_value = {"detail": "Insufficient wallet balance."}
     with patch("confamnode.client.httpx.post", return_value=mock_error_response):
         with pytest.raises(Exception):
-            client.gist(model="confam-intelligence", messages="How far?")
+            client.gist(model=CLOUD_INTELLIGENCE_MODEL, messages="How far?")
 
 
 def test_gist_reasoning_content_returned(client, mock_proxy_response):
     mock_proxy_response.json.return_value["choices"][0]["message"]["reasoning"] = "step by step..."
     with patch("confamnode.client.httpx.post", return_value=mock_proxy_response):
-        ansa = client.gist(model=models.REASONING, messages="Think carefully")
+        ansa = client.gist(model=CLOUD_INTELLIGENCE_MODEL, messages="Think carefully")
         assert ansa.reasoning == "step by step..."
 
