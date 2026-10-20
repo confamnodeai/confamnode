@@ -398,7 +398,7 @@ messages = [
 ]
 
 ansa = client.gist(
-    model="gemini/gemini-3.1-flash-lite",
+    model="gemini/gemini-3.5-flash-lite",
     messages=messages
 )
 
@@ -406,6 +406,7 @@ if ansa.reasoning:
     print(f"***Reasoning Start***\n{ansa.reasoning}\n***Reasoning End***")
 print(ansa.text)
 ```
+
 ---
 
 ## Environment Variable
